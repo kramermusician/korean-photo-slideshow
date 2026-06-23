@@ -9,7 +9,7 @@ Interactive vocabulary learning from your photos. Take a photo of something in t
    - Learner card (3–5 most useful Korean words for the scene)
    - Audio reading (gTTS Korean pronunciation)
    - Structured JSON data
-3. The slideshow auto-deploys to GitHub Pages with all photos + audio
+3. The slideshow auto-deploys to GitHub Pages (photos are downscaled into the repo; Korean audio streams from Dropbox)
 
 ## Interaction
 
@@ -39,11 +39,10 @@ The slideshow updates at: **[your-github-pages-url]**
 
 ## Project structure
 
-- `docs/` — GitHub Pages site (index.html + photos + audio)
+- `docs/` — GitHub Pages site
   - `index.html` — Main slideshow (auto-generated)
-  - `photos/` — Photo images
-  - `audio/` — gTTS audio files
-- `deploy.py` — Build script (copies photos from Dropbox, generates HTML)
+  - `photos/` — Downscaled photo images (~1280px, committed to the repo and served by Pages)
+- `deploy.py` — Build script: downscales each source photo from `~/Dropbox/KRAMOS/korean-photo/` into `docs/photos/`, then generates the HTML
 
 ---
 
