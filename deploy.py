@@ -73,7 +73,7 @@ def build_html(photos):
             photos.forEach((photo, idx) => {{
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
-                const photoUrl = `https://dl.dropboxusercontent.com/scl/fi/DROPBOX_ID/KRAMOS/korean-photo-feedback/${{photo.photo}}?rlkey=RLKEY&dl=1`.replace(/ /g, '%20');
+                const photoUrl = `https://dl.dropboxusercontent.com/scl/fi/9a1qh3ci3jxkagn07t0if/KRAMOS/korean-photo-feedback/${{photo.photo}}?rlkey=58m34w34puttjbz2qk3qqi61d&dl=1`.replace(/ /g, '%20');
                 const html = `
                     <div class="photo-container">
                         <img src="${{photoUrl}}" alt="${{photo.scene}}" class="photo" onerror="this.style.display='none'" />
