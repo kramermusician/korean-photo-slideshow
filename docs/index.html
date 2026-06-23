@@ -15,12 +15,15 @@
         .lang-btn { background: transparent; color: rgba(255,255,255,0.85); border: none; padding: 7px 16px; border-radius: 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
         .lang-btn:hover { color: white; background: rgba(255,255,255,0.18); }
         .lang-btn.active { background: white; color: #8b7355; }
+        .header-actions { margin-top: 14px; }
+        .game-btn { background: rgba(255,255,255,0.16); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .game-btn:hover { background: white; color: #8b7355; }
+        .game-btn.active { background: white; color: #8b7355; }
         .slide { display: none; padding: 40px; animation: fadeIn 0.3s ease; }
         .slide.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .photo-container { margin-bottom: 32px; text-align: center; }
         .photo { max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-        .scene { font-size: 14px; color: #666; font-style: italic; line-height: 1.6; }
         .vocab-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 32px; }
         .card { background: #f9f8f6; border: 2px solid #e0d9d0; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; min-height: 140px; display: flex; flex-direction: column; justify-content: center; }
         .card:hover { border-color: #8b7355; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
@@ -50,7 +53,6 @@
         .cg-find { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #A09C95; }
         .cg-prompt-word { font-size: 34px; font-weight: 600; color: #3D6B5E; cursor: pointer; transition: color 0.15s; line-height: 1.1; }
         .cg-prompt-word:hover { color: #2A5448; }
-        .cg-prompt-en { font-size: 15px; color: #9A9790; font-style: italic; }
         .photo-target-wrap { position: relative; border-radius: 14px; overflow: hidden; cursor: crosshair; border: 2px solid #EDE9E2; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 560px; width: 100%; }
         .target-photo { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; }
         @keyframes dotIn { from { transform: translate(-50%,-50%) scale(0.2); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
@@ -77,6 +79,9 @@
                 <button class="lang-btn" data-lang="ja">日本語</button>
                 <button class="lang-btn" data-lang="es">Español</button>
             </div>
+            <div class="header-actions">
+                <button class="game-btn" id="gameBtn">🎯 <span id="gameBtnLabel"></span></button>
+            </div>
         </div>
         <div class="slides-container"></div>
         <div class="controls">
@@ -94,9 +99,12 @@
         let lang = 'ko';  // 'ko' | 'ja' | 'es'
 
         const LANG = {
-            ko: { title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true, tts: 'ko-KR' },
-            ja: { title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese, reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), example: w => w.example_ja, audio: false, tts: 'ja-JP' },
-            es: { title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish, reading: w => w.gender || '', example: w => w.example_es, audio: false, tts: 'es-ES' },
+            ko: { title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true, tts: 'ko-KR',
+                   game: '사진 게임', heading: '사진 게임 · 눌러보세요', find: '찾기', miss: '아쉬워요', next: '다음 →', seeScore: '점수 보기 →', playAgain: '다시 하기', score: (n, t) => n + ' / ' + t + ' 맞췄어요!' },
+            ja: { title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese, reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), example: w => w.example_ja, audio: false, tts: 'ja-JP',
+                   game: '写真ゲーム', heading: '写真ゲーム · タップしよう', find: '探そう', miss: 'おしい', next: '次へ →', seeScore: 'スコア →', playAgain: 'もう一度', score: (n, t) => n + ' / ' + t + ' 正解！' },
+            es: { title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish, reading: w => w.gender || '', example: w => w.example_es, audio: false, tts: 'es-ES',
+                   game: 'Juego de fotos', heading: 'Juego de fotos · toca el objeto', find: 'Busca', miss: 'casi', next: 'siguiente →', seeScore: 'ver puntaje →', playAgain: 'otra vez', score: (n, t) => '¡' + n + ' de ' + t + '!' },
         };
 
         function wordsFor(photo) { return photo[LANG[lang].words] || []; }
@@ -156,8 +164,9 @@
         function qRenderPrompt() {
             const w = qWord();
             if (!w) return;
+            document.getElementById('q-heading').textContent = LANG[lang].heading;
+            document.getElementById('q-find').textContent = LANG[lang].find;
             document.getElementById('q-word').textContent = LANG[lang].front(w);
-            document.getElementById('q-en').textContent = '(' + w.english + ')';
         }
 
         function qStart() {
@@ -220,21 +229,21 @@
             const w = qWord();
             if (hit) {
                 qScore++;
-                fb.textContent = '✓ ' + (w ? w.english : 'correct') + '!';
+                fb.textContent = w ? '✓ ' + LANG[lang].front(w) : '✓';
                 fb.style.color = '#3D6B5E';
                 if (w) speak(LANG[lang].front(w), LANG[lang].tts);
             } else {
-                fb.textContent = 'not quite — see the green area';
+                fb.textContent = '✗ ' + LANG[lang].miss;
                 fb.style.color = '#B85454';
             }
 
             const nxt = document.getElementById('q-next');
             nxt.style.display = '';
             if (qIdx >= qChallenges.length - 1) {
-                nxt.textContent = 'see score →';
+                nxt.textContent = LANG[lang].seeScore;
                 nxt.onclick = qFinish;
             } else {
-                nxt.textContent = 'next →';
+                nxt.textContent = LANG[lang].next;
                 nxt.onclick = () => { qIdx++; qLoad(); };
             }
         }
@@ -242,8 +251,8 @@
         function qFinish() {
             document.getElementById('q-main').style.display = 'none';
             const scr = document.getElementById('q-score');
-            scr.querySelector('.q-score-text').textContent =
-                'You found ' + qScore + ' of ' + qChallenges.length + '!';
+            scr.querySelector('.q-score-text').textContent = LANG[lang].score(qScore, qChallenges.length);
+            scr.querySelector('#q-replay').textContent = LANG[lang].playAgain;
             scr.style.display = '';
         }
 
@@ -252,6 +261,9 @@
             container.innerHTML = '';
             document.getElementById('title').textContent = LANG[lang].title;
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+            const gameBtn = document.getElementById('gameBtn');
+            gameBtn.style.display = hasQuiz ? '' : 'none';
+            document.getElementById('gameBtnLabel').textContent = LANG[lang].game;
             photos.forEach((photo, idx) => {
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
@@ -260,7 +272,6 @@
                 const html = `
                     <div class="photo-container">
                         <img src="${photoUrl}" alt="${photo.scene}" class="photo" onerror="this.style.display='none'" />
-                        <div class="scene">${photo.scene}</div>
                     </div>
                     <div class="vocab-cards">
                         ${words.map((word, widx) => {
@@ -285,12 +296,11 @@
                 const qs = document.createElement('div');
                 qs.className = 'slide' + (currentSlide === QUIZ_INDEX() ? ' active' : '');
                 qs.innerHTML = `
-                    <div class="quiz-heading">Click Quiz · tap the object</div>
+                    <div class="quiz-heading" id="q-heading"></div>
                     <div id="q-main" class="click-game">
                         <div class="cg-prompt-row">
-                            <span class="cg-find">Find</span>
+                            <span class="cg-find" id="q-find"></span>
                             <span class="cg-prompt-word" id="q-word" onclick="qSpeak()"></span>
-                            <span class="cg-prompt-en" id="q-en"></span>
                         </div>
                         <div class="photo-target-wrap" id="q-wrap">
                             <img id="q-photo" class="target-photo" src="" alt="">
@@ -340,6 +350,8 @@
         function updateNav() {
             document.getElementById('prevBtn').disabled = currentSlide === 0;
             document.getElementById('nextBtn').disabled = currentSlide === slideTotal() - 1;
+            const gameBtn = document.getElementById('gameBtn');
+            if (gameBtn) gameBtn.classList.toggle('active', hasQuiz && currentSlide === QUIZ_INDEX());
         }
 
         function setLang(next) {
@@ -354,6 +366,9 @@
         document.getElementById('langPicker').addEventListener('click', (e) => {
             const btn = e.target.closest('.lang-btn');
             if (btn) setLang(btn.dataset.lang);
+        });
+        document.getElementById('gameBtn').addEventListener('click', () => {
+            if (hasQuiz) showSlide(QUIZ_INDEX());
         });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') showSlide(currentSlide - 1);
