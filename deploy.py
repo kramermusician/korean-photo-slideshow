@@ -11,7 +11,20 @@ Usage:
 
 import json
 import shutil
+import re
 from pathlib import Path
+
+
+def sanitize_filename(filename):
+    """Convert unsafe filenames to URL-safe ones."""
+    # Remove extension
+    name, ext = filename.rsplit('.', 1) if '.' in filename else (filename, '')
+    # Replace spaces, commas, and other unsafe chars with hyphens
+    safe_name = re.sub(r'[^a-zA-Z0-9_-]', '-', name)
+    # Remove consecutive hyphens
+    safe_name = re.sub(r'-+', '-', safe_name)
+    # Return with extension
+    return f"{safe_name}.{ext}" if ext else safe_name
 
 
 def build_html(photos):
@@ -386,6 +399,7 @@ def build_html(photos):
 def deploy():
     """Copy photos + audio, generate HTML, commit to git."""
     feedback_dir = Path.home() / "Dropbox" / "KRAMOS" / "korean-photo-feedback"
+    photo_in_dir = Path.home() / "Dropbox" / "KRAMOS" / "korean-photo"
     repo_dir = Path("/Users/ggibson1/Desktop/Kramer-Projects-2026/korean-photo-slideshow")
     docs_dir = repo_dir / "docs"
     photos_dir = docs_dir / "photos"
@@ -394,6 +408,10 @@ def deploy():
     if not feedback_dir.exists():
         print(f"Error: {feedback_dir} not found")
         return False
+
+    if not photo_in_dir.exists():
+        print(f"Warning: {photo_in_dir} not found (but continuing anyway)")
+        photo_in_dir = None
 
     # Create directories
     docs_dir.mkdir(exist_ok=True)
@@ -408,21 +426,34 @@ def deploy():
         try:
             with open(json_file) as f:
                 data = json.load(f)
-                photos.append(data)
 
-            # Copy photo
-            photo_src = feedback_dir / data["photo"]
-            photo_dst = photos_dir / data["photo"]
-            if photo_src.exists():
+            # Create safe filenames for web
+            original_photo = data["photo"]
+            safe_photo = sanitize_filename(original_photo)
+            safe_stem = sanitize_filename(data["stem"])
+            safe_audio = f"{safe_stem}-audio.mp3"
+
+            # Copy photo with safe filename (from input folder, not feedback)
+            photo_src = photo_in_dir / original_photo if photo_in_dir else None
+            photo_dst = photos_dir / safe_photo
+            if photo_src and photo_src.exists():
                 shutil.copy2(photo_src, photo_dst)
-                print(f"✓ Copied photo: {data['photo']}")
+                print(f"✓ Copied photo: {original_photo} → {safe_photo}")
+            else:
+                print(f"⚠ Photo not found: {original_photo} (will reference anyway)")
 
-            # Copy audio
+            # Copy audio with safe filename
             audio_src = feedback_dir / f"{data['stem']}-audio.mp3"
-            audio_dst = audio_dir / f"{data['stem']}-audio.mp3"
+            audio_dst = audio_dir / safe_audio
             if audio_src.exists():
                 shutil.copy2(audio_src, audio_dst)
-                print(f"✓ Copied audio: {data['stem']}-audio.mp3")
+                print(f"✓ Copied audio: {data['stem']}-audio.mp3 → {safe_audio}")
+
+            # Update data to reference safe filenames
+            data["photo"] = safe_photo
+            data["stem"] = safe_stem
+
+            photos.append(data)
 
         except Exception as e:
             print(f"Warning: {json_file}: {e}")
