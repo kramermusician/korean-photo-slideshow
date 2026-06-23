@@ -1,6 +1,6 @@
 # Korean Photo Slideshow
 
-Interactive vocabulary learning from your photos. Take a photo of something in the world, get the most useful Korean words for what's visible, then learn them — Hangul first, click to reveal translations and example sentences.
+Interactive vocabulary learning from your photos. Take a photo of something in the world, get the most useful Korean words for what's visible, then learn them — Hangul first, click to reveal translations and example sentences. A header toggle flips the whole deck to **Japanese mode** for the same concepts.
 
 ## How it works
 
@@ -15,7 +15,8 @@ Interactive vocabulary learning from your photos. Take a photo of something in t
 
 - **Hangul-only cards** — vocabulary words show only Korean Hangul initially
 - **Click to reveal** — tap any word to see romanization + English translation + example sentence + audio button
-- **Audio playback** — 🔊 button plays the full gTTS recording
+- **Japanese mode** — header toggle ("日本語モード →") flips every card to Japanese (kanji/kana → kana · romaji + English + です/ます example), drawn from the parallel `words_ja` array. Japanese audio is a v2 item, so the 🔊 button only appears in Korean mode.
+- **Audio playback** — 🔊 button plays the full gTTS recording (Korean)
 - **Navigation** — Previous/Next buttons or arrow keys (← / →)
 - **Mobile-friendly** — responsive design, works on all devices
 
