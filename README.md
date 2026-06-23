@@ -1,6 +1,6 @@
 # Korean Photo Slideshow
 
-Interactive vocabulary learning from your photos. Take a photo of something in the world, get the most useful Korean words for what's visible, then learn them — Hangul first, click to reveal translations and example sentences. A header language picker flips the whole deck to **Japanese** or **Spanish** mode for the same concepts.
+Interactive vocabulary learning from your photos. Take a photo of something in the world, get the most useful Korean words for what's visible, then learn them — Hangul first, click to reveal translations and example sentences. A header language picker flips the whole deck to **Japanese** or **Spanish** mode for the same concepts. The deck ends with a **Click Quiz** that shows a word and asks you to tap the matching object in the photo — in whichever language you have selected.
 
 ## How it works
 
@@ -20,7 +20,9 @@ Interactive vocabulary learning from your photos. Take a photo of something in t
   - **Spanish** — front = lemma, reveal = el/la article + English + present-tense example (from `words_es`)
   - All three are parallel arrays mirroring the same concepts. Japanese/Spanish audio is a v2 item, so the 🔊 button only appears in Korean mode.
 - **Audio playback** — 🔊 button plays the full gTTS recording (Korean)
-- **Navigation** — Previous/Next buttons or arrow keys (← / →)
+- **Click Quiz** — the final slide. Shows one vocabulary word and asks you to click that object in the photo. A correct tap reveals the spot in green and speaks the word; a miss shows you where it was. Running counter + a score screen with "play again." The prompt and the spoken word follow the active language picker, so the same photo quizzes you in Korean, Japanese, or Spanish.
+  - **Where the targets come from** — each photo's JSON carries a `bbox` array parallel to `words`: per word, either a list of `{x1,y1,x2,y2}` percentage boxes (where the object sits in the image) or `null` for verbs / things you can't point at. Because location doesn't change with language, one `bbox` set drives the quiz in all three languages. The pipeline emits `bbox` automatically for every new photo, so the quiz grows on its own.
+- **Navigation** — Previous/Next buttons or arrow keys (← / →); the quiz is the last slide
 - **Mobile-friendly** — responsive design, works on all devices
 
 ## To deploy a new batch
