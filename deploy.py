@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Generate KKAS slideshow HTML (lightweight, no file copying).
 
-Renders both Korean and Japanese vocab from the same per-photo JSONs and adds a
-header toggle ("Japanese mode" / "Korean mode"). Korean comes from each photo's
-`words` array; Japanese from the parallel `words_ja` array (mirrors the same
-concepts). Japanese audio is not yet generated, so the audio button only shows in
-Korean mode.
+Renders Korean, Japanese, and Spanish vocab from the same per-photo JSONs and a
+header language picker (한국어 · 日本語 · Español). Korean comes from each photo's
+`words` array; Japanese from `words_ja`; Spanish from `words_es` — all three are
+parallel arrays mirroring the same concepts. Only Korean has audio so far, so the
+audio button only shows in Korean mode.
 """
 
 import json
@@ -26,10 +26,12 @@ def build_html(photos):
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #f5ede4 0%, #e8ddd0 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }}
         .container {{ max-width: 900px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); overflow: hidden; }}
-        .header {{ position: relative; background: linear-gradient(135deg, #8b7355 0%, #a89080 100%); color: white; padding: 24px; text-align: center; }}
-        .header h1 {{ font-size: 24px; font-weight: 600; letter-spacing: 0.5px; }}
-        .lang-toggle {{ position: absolute; top: 50%; right: 20px; transform: translateY(-50%); background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.5); padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px); }}
-        .lang-toggle:hover {{ background: rgba(255,255,255,0.32); }}
+        .header {{ background: linear-gradient(135deg, #8b7355 0%, #a89080 100%); color: white; padding: 24px; text-align: center; }}
+        .header h1 {{ font-size: 24px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 16px; }}
+        .lang-picker {{ display: inline-flex; gap: 4px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); border-radius: 22px; padding: 4px; backdrop-filter: blur(4px); }}
+        .lang-btn {{ background: transparent; color: rgba(255,255,255,0.85); border: none; padding: 7px 16px; border-radius: 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }}
+        .lang-btn:hover {{ color: white; background: rgba(255,255,255,0.18); }}
+        .lang-btn.active {{ background: white; color: #8b7355; }}
         .slide {{ display: none; padding: 40px; animation: fadeIn 0.3s ease; }}
         .slide.active {{ display: block; }}
         @keyframes fadeIn {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
@@ -56,14 +58,18 @@ def build_html(photos):
         .nav-btn:disabled {{ background: #d4ccc0; cursor: not-allowed; transform: none; }}
         .counter {{ font-size: 14px; color: #8b7355; font-weight: 500; min-width: 60px; text-align: center; }}
         .spacer {{ flex: 1; }}
-        @media (max-width: 600px) {{ .slide {{ padding: 24px; }} .controls {{ padding: 0 24px 24px; }} .vocab-cards {{ grid-template-columns: 1fr; }} .photo {{ max-height: 300px; }} .word-front {{ font-size: 28px; }} .header h1 {{ font-size: 19px; }} .lang-toggle {{ right: 12px; padding: 6px 10px; font-size: 12px; }} }}
+        @media (max-width: 600px) {{ .slide {{ padding: 24px; }} .controls {{ padding: 0 24px 24px; }} .vocab-cards {{ grid-template-columns: 1fr; }} .photo {{ max-height: 300px; }} .word-front {{ font-size: 28px; }} .header h1 {{ font-size: 19px; }} .lang-btn {{ padding: 6px 11px; font-size: 13px; }} }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1 id="title">Korean from Photos</h1>
-            <button class="lang-toggle" id="langToggle">日本語モード →</button>
+            <div class="lang-picker" id="langPicker">
+                <button class="lang-btn" data-lang="ko">한국어</button>
+                <button class="lang-btn" data-lang="ja">日本語</button>
+                <button class="lang-btn" data-lang="es">Español</button>
+            </div>
         </div>
         <div class="slides-container"></div>
         <div class="controls">
@@ -78,22 +84,21 @@ def build_html(photos):
     <script>
         const photos = {photos_json};
         let currentSlide = 0;
-        let lang = 'ko';  // 'ko' or 'ja'
+        let lang = 'ko';  // 'ko' | 'ja' | 'es'
 
         const LANG = {{
-            ko: {{ title: 'Korean from Photos', toggle: '日本語モード →', words: 'words', reading: w => w.romanization, audio: true }},
-            ja: {{ title: 'Japanese from Photos', toggle: '← 한국어 모드', words: 'words_ja', reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), audio: false }},
+            ko: {{ title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true }},
+            ja: {{ title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese, reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), example: w => w.example_ja, audio: false }},
+            es: {{ title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish, reading: w => w.gender || '', example: w => w.example_es, audio: false }},
         }};
 
         function wordsFor(photo) {{ return photo[LANG[lang].words] || []; }}
-        function frontText(w) {{ return lang === 'ja' ? w.japanese : w.hangul; }}
-        function exampleNative(w) {{ return lang === 'ja' ? w.example_ja : w.example_ko; }}
 
         function renderSlides() {{
             const container = document.querySelector('.slides-container');
             container.innerHTML = '';
             document.getElementById('title').textContent = LANG[lang].title;
-            document.getElementById('langToggle').textContent = LANG[lang].toggle;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
             photos.forEach((photo, idx) => {{
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
@@ -105,17 +110,19 @@ def build_html(photos):
                         <div class="scene">${{photo.scene}}</div>
                     </div>
                     <div class="vocab-cards">
-                        ${{words.map((word, widx) => `
+                        ${{words.map((word, widx) => {{
+                            const reading = LANG[lang].reading(word);
+                            return `
                             <div class="card" data-word="${{widx}}">
-                                <div class="word-front">${{frontText(word)}}</div>
+                                <div class="word-front">${{LANG[lang].front(word)}}</div>
                                 <div class="reveal">
-                                    <div class="romanization">${{LANG[lang].reading(word)}}</div>
+                                    ${{reading ? `<div class="romanization">${{reading}}</div>` : ''}}
                                     <div class="english">${{word.english}}</div>
-                                    <div class="example"><div>${{exampleNative(word)}}</div><div>${{word.example_en}}</div></div>
+                                    <div class="example"><div>${{LANG[lang].example(word)}}</div><div>${{word.example_en}}</div></div>
                                     ${{LANG[lang].audio ? '<button class="audio-btn">🔊 Audio</button>' : ''}}
                                 </div>
-                            </div>
-                        `).join('')}}
+                            </div>`;
+                        }}).join('')}}
                     </div>
                 `;
                 slide.innerHTML = html;
@@ -145,12 +152,18 @@ def build_html(photos):
             document.getElementById('nextBtn').disabled = currentSlide === photos.length - 1;
         }}
 
-        document.getElementById('prevBtn').addEventListener('click', () => showSlide(currentSlide - 1));
-        document.getElementById('nextBtn').addEventListener('click', () => showSlide(currentSlide + 1));
-        document.getElementById('langToggle').addEventListener('click', () => {{
-            lang = lang === 'ko' ? 'ja' : 'ko';
+        function setLang(next) {{
+            if (!LANG[next] || next === lang) return;
+            lang = next;
             renderSlides();
             showSlide(currentSlide);
+        }}
+
+        document.getElementById('prevBtn').addEventListener('click', () => showSlide(currentSlide - 1));
+        document.getElementById('nextBtn').addEventListener('click', () => showSlide(currentSlide + 1));
+        document.getElementById('langPicker').addEventListener('click', (e) => {{
+            const btn = e.target.closest('.lang-btn');
+            if (btn) setLang(btn.dataset.lang);
         }});
         document.addEventListener('keydown', (e) => {{
             if (e.key === 'ArrowLeft') showSlide(currentSlide - 1);
@@ -200,8 +213,9 @@ def deploy():
     with open(html_file, "w", encoding="utf-8") as f:
         f.write(html)
     ja_count = sum(len(p.get("words_ja", [])) for p in photos)
+    es_count = sum(len(p.get("words_es", [])) for p in photos)
     print(f"✓ Generated {html_file}")
-    print(f"✓ {len(photos)} photo(s) — {sum(len(p['words']) for p in photos)} KO word(s), {ja_count} JA word(s)")
+    print(f"✓ {len(photos)} photo(s) — {sum(len(p['words']) for p in photos)} KO, {ja_count} JA, {es_count} ES word(s)")
     return True
 
 
