@@ -1,19 +1,81 @@
 #!/usr/bin/env python3
-"""Generate KKAS slideshow HTML (lightweight, no file copying).
+"""Generate KKAS slideshow HTML.
 
 Renders Korean, Japanese, and Spanish vocab from the same per-photo JSONs and a
 header language picker (한국어 · 日本語 · Español). Korean comes from each photo's
 `words` array; Japanese from `words_ja`; Spanish from `words_es` — all three are
 parallel arrays mirroring the same concepts. Only Korean has audio so far, so the
 audio button only shows in Korean mode.
+
+Images: each source photo (from ~/Dropbox/KRAMOS/korean-photo/) is downscaled
+into docs/photos/ with a URL-safe name and served as a repo-local file by GitHub
+Pages. This is self-contained — no external Dropbox link to break. Each photo's
+JSON gets a `local_image` field (e.g. "photos/Photo-Jun-07-2026-14-21-31.jpg").
 """
 
 import json
+import re
+import shutil
+import subprocess
 from pathlib import Path
+
+# Where original photos may live, in priority order. The watcher leaves the
+# original in the input folder after processing; the feedback folder is a fallback.
+SOURCE_DIRS = [
+    Path.home() / "Dropbox" / "KRAMOS" / "korean-photo",
+    Path.home() / "Dropbox" / "KRAMOS" / "korean-photo-feedback",
+]
+# Long-edge cap for web images. The UI shows them at <=400px tall, so 1280 is
+# plenty crisp while keeping the repo small (~150-300KB/photo vs. ~3MB original).
+MAX_EDGE = 1280
+
+
+def safe_name(filename):
+    """URL-safe .jpg filename derived from the original (spaces/commas -> '-')."""
+    stem = Path(filename).stem
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", stem).strip("-")
+    return f"{slug}.jpg"
+
+
+def downscale(src, dest):
+    """Downscale src into dest as JPEG via sips. Returns True on success."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        subprocess.run(
+            ["sips", "-s", "format", "jpeg",
+             "--resampleHeightWidthMax", str(MAX_EDGE),
+             str(src), "--out", str(dest)],
+            check=True, capture_output=True,
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # sips missing or failed (e.g. non-macOS) — fall back to a plain copy so
+        # the image still shows, just unoptimized.
+        try:
+            shutil.copy2(src, dest)
+            return True
+        except OSError:
+            return False
+
+
+def prepare_image(photo, photos_out_dir):
+    """Resolve the source photo, (re)build a downscaled docs/photos/ copy, and
+    set photo['local_image']. Returns a one-word status for logging."""
+    src_name = photo.get("photo", "")
+    dest = photos_out_dir / safe_name(src_name)
+    photo["local_image"] = f"photos/{dest.name}"
+
+    src = next((d / src_name for d in SOURCE_DIRS if (d / src_name).exists()), None)
+    if src is None:
+        # No original available. Keep an already-committed copy if present.
+        return "kept" if dest.exists() else "MISSING"
+    if dest.exists() and dest.stat().st_mtime >= src.stat().st_mtime:
+        return "cached"
+    return "built" if downscale(src, dest) else "MISSING"
 
 
 def build_html(photos):
-    """Build HTML with embedded JSON data. References Dropbox for media."""
+    """Build HTML with embedded JSON data. Images are served from docs/photos/."""
     photos_json = json.dumps(photos, ensure_ascii=False)
 
     html = f"""<!DOCTYPE html>
@@ -102,7 +164,7 @@ def build_html(photos):
             photos.forEach((photo, idx) => {{
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
-                const photoUrl = `https://dl.dropboxusercontent.com/scl/fi/9a1qh3ci3jxkagn07t0if/KRAMOS/korean-photo-feedback/${{photo.photo}}?rlkey=58m34w34puttjbz2qk3qqi61d&dl=1`.replace(/ /g, '%20');
+                const photoUrl = encodeURI(photo.local_image || '');
                 const words = wordsFor(photo);
                 const html = `
                     <div class="photo-container">
@@ -207,6 +269,15 @@ def deploy():
         print("No photos found!")
         return False
 
+    # Downscale each source photo into docs/photos/ and set photo['local_image'].
+    photos_out_dir = docs_dir / "photos"
+    statuses = {}
+    for p in photos:
+        st = prepare_image(p, photos_out_dir)
+        statuses[st] = statuses.get(st, 0) + 1
+        if st == "MISSING":
+            print(f"  ! no image for: {p.get('photo')}")
+
     # Generate HTML
     html = build_html(photos)
     html_file = docs_dir / "index.html"
@@ -216,6 +287,7 @@ def deploy():
     es_count = sum(len(p.get("words_es", [])) for p in photos)
     print(f"✓ Generated {html_file}")
     print(f"✓ {len(photos)} photo(s) — {sum(len(p['words']) for p in photos)} KO, {ja_count} JA, {es_count} ES word(s)")
+    print(f"✓ images: {', '.join(f'{k}={v}' for k, v in sorted(statuses.items()))}")
     return True
 
 
