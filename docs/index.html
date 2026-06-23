@@ -5,259 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Korean from Photos</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #f5ede4 0%, #e8ddd0 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            width: 100%;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #8b7355 0%, #a89080 100%);
-            color: white;
-            padding: 24px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .slide {
-            display: none;
-            padding: 40px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .slide.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .photo-container {
-            margin-bottom: 32px;
-            text-align: center;
-        }
-
-        .photo {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .scene {
-            font-size: 14px;
-            color: #666;
-            font-style: italic;
-            line-height: 1.6;
-        }
-
-        .vocab-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-            margin-top: 32px;
-        }
-
-        .card {
-            background: #f9f8f6;
-            border: 2px solid #e0d9d0;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-height: 140px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .card:hover {
-            border-color: #8b7355;
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .card.flipped {
-            background: #f0ebe5;
-            border-color: #8b7355;
-        }
-
-        .hangul {
-            font-size: 32px;
-            font-weight: 600;
-            color: #2c2c2c;
-            margin-bottom: 8px;
-            line-height: 1.2;
-        }
-
-        .card.flipped .hangul {
-            display: none;
-        }
-
-        .reveal {
-            display: none;
-        }
-
-        .card.flipped .reveal {
-            display: block;
-        }
-
-        .romanization {
-            font-size: 13px;
-            color: #8b7355;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .english {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 12px;
-        }
-
-        .example {
-            font-size: 12px;
-            color: #999;
-            line-height: 1.4;
-            margin-bottom: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #e0d9d0;
-        }
-
-        .card.flipped .example {
-            border-top: 1px solid #d4ccc0;
-        }
-
-        .exposure {
-            font-size: 11px;
-            color: #a89080;
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        .audio-btn {
-            margin-top: 8px;
-            background: white;
-            border: 1px solid #d4ccc0;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: #8b7355;
-            font-weight: 500;
-        }
-
-        .audio-btn:hover {
-            background: #f0ebe5;
-            border-color: #8b7355;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 40px 40px;
-            gap: 16px;
-        }
-
-        .nav-btn {
-            background: #8b7355;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .nav-btn:hover {
-            background: #a89080;
-            transform: translateY(-1px);
-        }
-
-        .nav-btn:disabled {
-            background: #d4ccc0;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .counter {
-            font-size: 14px;
-            color: #8b7355;
-            font-weight: 500;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        .spacer {
-            flex: 1;
-        }
-
-        @media (max-width: 600px) {
-            .slide {
-                padding: 24px;
-            }
-
-            .controls {
-                padding: 0 24px 24px;
-            }
-
-            .vocab-cards {
-                grid-template-columns: 1fr;
-            }
-
-            .photo {
-                max-height: 300px;
-            }
-
-            .hangul {
-                font-size: 28px;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #f5ede4 0%, #e8ddd0 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { max-width: 900px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #8b7355 0%, #a89080 100%); color: white; padding: 24px; text-align: center; }
+        .header h1 { font-size: 24px; font-weight: 600; letter-spacing: 0.5px; }
+        .slide { display: none; padding: 40px; animation: fadeIn 0.3s ease; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .photo-container { margin-bottom: 32px; text-align: center; }
+        .photo { max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+        .scene { font-size: 14px; color: #666; font-style: italic; line-height: 1.6; }
+        .vocab-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 32px; }
+        .card { background: #f9f8f6; border: 2px solid #e0d9d0; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; min-height: 140px; display: flex; flex-direction: column; justify-content: center; }
+        .card:hover { border-color: #8b7355; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+        .card.flipped { background: #f0ebe5; border-color: #8b7355; }
+        .hangul { font-size: 32px; font-weight: 600; color: #2c2c2c; margin-bottom: 8px; line-height: 1.2; }
+        .card.flipped .hangul { display: none; }
+        .reveal { display: none; }
+        .card.flipped .reveal { display: block; }
+        .romanization { font-size: 13px; color: #8b7355; margin-bottom: 8px; font-weight: 500; }
+        .english { font-size: 14px; color: #666; margin-bottom: 12px; }
+        .example { font-size: 12px; color: #999; line-height: 1.4; margin-bottom: 8px; padding-top: 8px; border-top: 1px solid #e0d9d0; }
+        .card.flipped .example { border-top: 1px solid #d4ccc0; }
+        .audio-btn { margin-top: 8px; background: white; border: 1px solid #d4ccc0; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s ease; color: #8b7355; font-weight: 500; }
+        .audio-btn:hover { background: #f0ebe5; border-color: #8b7355; }
+        .controls { display: flex; justify-content: space-between; align-items: center; padding: 0 40px 40px; gap: 16px; }
+        .nav-btn { background: #8b7355; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; }
+        .nav-btn:hover { background: #a89080; transform: translateY(-1px); }
+        .nav-btn:disabled { background: #d4ccc0; cursor: not-allowed; transform: none; }
+        .counter { font-size: 14px; color: #8b7355; font-weight: 500; min-width: 60px; text-align: center; }
+        .spacer { flex: 1; }
+        @media (max-width: 600px) { .slide { padding: 24px; } .controls { padding: 0 24px 24px; } .vocab-cards { grid-template-columns: 1fr; } .photo { max-height: 300px; } .hangul { font-size: 28px; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>Korean from Photos</h1>
-        </div>
-
-        <div class="slides-container">
-            <!-- Slides will be generated here by JS -->
-        </div>
-
+        <div class="header"><h1>Korean from Photos</h1></div>
+        <div class="slides-container"></div>
         <div class="controls">
             <button class="nav-btn" id="prevBtn">← Previous</button>
             <div class="spacer"></div>
@@ -268,36 +53,30 @@
     </div>
 
     <script>
-        const photos = [{"photo": "Photo-Jun-07-2026-14-21-31.jpg", "stem": "Photo-Jun-07-2026-14-21-31", "scene": "A restaurant table with flatbread on a plate, three small bowls of dips on a wooden board, and a fork and knife on marble.", "words": [{"hangul": "\ube75", "romanization": "ppang", "english": "bread", "pos": "noun", "example_ko": "\uc774 \ube75 \uc815\ub9d0 \ub9db\uc788\uc5b4\uc694.", "example_en": "This bread is really delicious."}, {"hangul": "\uc74c\uc2dd", "romanization": "eumsik", "english": "food", "pos": "noun", "example_ko": "\uc74c\uc2dd\uc774 \ub108\ubb34 \ub9ce\uc544\uc694.", "example_en": "There's so much food."}, {"hangul": "\uadf8\ub987", "romanization": "geureut", "english": "bowl", "pos": "noun", "example_ko": "\uadf8\ub987\uc5d0 \uc18c\uc2a4\uac00 \uc788\uc5b4\uc694.", "example_en": "There's sauce in the bowl."}, {"hangul": "\uba39\ub2e4", "romanization": "meokda", "english": "to eat", "pos": "verb", "example_ko": "\uc6b0\ub9ac \uac19\uc774 \uba39\uc5b4\uc694.", "example_en": "Let's eat together."}, {"hangul": "\ub9db\uc788\ub2e4", "romanization": "masitda", "english": "to be delicious", "pos": "phrase", "example_ko": "\uc774\uac70 \uc9c4\uc9dc \ub9db\uc788\uc5b4\uc694.", "example_en": "This is really delicious."}]}, {"photo": "Photo-Jun-09-2026-18-17-06.jpg", "stem": "Photo-Jun-09-2026-18-17-06", "scene": "A wide green grassy field under a clear blue sky, with a tall brick apartment building and other city buildings in the distance.", "words": [{"hangul": "\uc794\ub514", "romanization": "jandi", "english": "grass, lawn", "pos": "noun", "example_ko": "\uc794\ub514\uac00 \uc815\ub9d0 \ud478\ub974\ub7ec\uc694.", "example_en": "The grass is really green."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\uc624\ub298 \ud558\ub298\uc774 \ub9d1\uc544\uc694.", "example_en": "The sky is clear today."}, {"hangul": "\uac74\ubb3c", "romanization": "geonmul", "english": "building", "pos": "noun", "example_ko": "\uc800 \uac74\ubb3c\uc774 \uc544\uc8fc \ub192\uc544\uc694.", "example_en": "That building is very tall."}, {"hangul": "\uacf5\uc6d0", "romanization": "gongwon", "english": "park", "pos": "noun", "example_ko": "\uacf5\uc6d0\uc5d0\uc11c \uc0b0\ucc45\ud574\uc694.", "example_en": "I take a walk in the park."}, {"hangul": "\uac77\ub2e4", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "\uc800\ub294 \uc794\ub514 \uc704\ub97c \uac78\uc5b4\uc694.", "example_en": "I walk on the grass."}]}, {"photo": "Photo-Jun-13-2026-11-31-37.jpg", "stem": "Photo-Jun-13-2026-11-31-37", "scene": "A sunny tree-lined road with a stop sign, a parked car, and a bike path running alongside it.", "words": [{"hangul": "\uae38", "romanization": "gil", "english": "road, path", "pos": "noun", "example_ko": "\uc774 \uae38\uc740 \uc544\uc8fc \uc870\uc6a9\ud574\uc694.", "example_en": "This road is very quiet."}, {"hangul": "\ucc28", "romanization": "cha", "english": "car", "pos": "noun", "example_ko": "\uae38 \uc606\uc5d0 \ucc28\uac00 \uc788\uc5b4\uc694.", "example_en": "There is a car next to the road."}, {"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "\ub098\ubb34\uac00 \uc815\ub9d0 \ub9ce\uc544\uc694.", "example_en": "There are really a lot of trees."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\uc624\ub298 \ud558\ub298\uc774 \ud30c\ub798\uc694.", "example_en": "The sky is blue today."}, {"hangul": "\uba48\ucd94\ub2e4", "romanization": "meomchuda", "english": "to stop", "pos": "verb", "example_ko": "\uc5ec\uae30\uc5d0\uc11c \ucc28\uac00 \uba48\ucdb0\uc694.", "example_en": "The car stops here."}]}, {"photo": "Photo-Jun-19-2026-10-05-46.jpg", "stem": "Photo-Jun-19-2026-10-05-46", "scene": "A Minecraft village with a fenced garden plot, trees, and wooden houses under a purple sky.", "words": [{"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree / wood", "pos": "noun", "example_ko": "\uc800 \ub098\ubb34\ub294 \uc815\ub9d0 \ud06c\ub124\uc694.", "example_en": "That tree is really big."}, {"hangul": "\uc9d1", "romanization": "jip", "english": "house", "pos": "noun", "example_ko": "\uc800 \uc9d1\uc740 \ub098\ubb34\ub85c \ub9cc\ub4e4\uc5c8\uc5b4\uc694.", "example_en": "That house is made of wood."}, {"hangul": "\ubc2d", "romanization": "bat", "english": "field / vegetable patch", "pos": "noun", "example_ko": "\ubc2d\uc5d0\uc11c \ucc44\uc18c\ub97c \ud0a4\uc6cc\uc694.", "example_en": "I grow vegetables in the field."}, {"hangul": "\uc2ec\ub2e4", "romanization": "simda", "english": "to plant", "pos": "verb", "example_ko": "\uc528\uc557\uc744 \ubc2d\uc5d0 \uc2ec\uc5b4\uc694.", "example_en": "I plant seeds in the field."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\ud558\ub298\uc774 \ubcf4\ub77c\uc0c9\uc774\uc5d0\uc694.", "example_en": "The sky is purple."}]}, {"photo": "Photo-Jun-21-2026-17-23-33.jpg", "stem": "Photo-Jun-21-2026-17-23-33", "scene": "A smiling woman in a white t-shirt and blue floral skirt stands on a sidewalk in front of a house with a small garden and porch chairs.", "words": [{"hangul": "\uc9d1", "romanization": "jip", "english": "house / home", "pos": "noun", "example_ko": "\uc800 \uc9d1\uc774 \uc608\ubed0\uc694.", "example_en": "That house is pretty."}, {"hangul": "\uce58\ub9c8", "romanization": "chima", "english": "skirt", "pos": "noun", "example_ko": "\uce58\ub9c8\uac00 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "The skirt is really pretty."}, {"hangul": "\uc815\uc6d0", "romanization": "jeonwon", "english": "garden / yard", "pos": "noun", "example_ko": "\uc815\uc6d0\uc5d0 \uaf43\uc774 \uc788\uc5b4\uc694.", "example_en": "There are flowers in the garden."}, {"hangul": "\uc6c3\ub2e4", "romanization": "utda", "english": "to smile / to laugh", "pos": "verb", "example_ko": "\uc65c \uc6c3\uc5b4\uc694?", "example_en": "Why are you smiling?"}, {"hangul": "\uae38", "romanization": "gil", "english": "street / road / path", "pos": "noun", "example_ko": "\uae38\uc5d0\uc11c \uc0ac\uc9c4\uc744 \ucc0d\uc5c8\uc5b4\uc694.", "example_en": "I took a photo on the street."}]}, {"photo": "Photo-Jun-21-2026-21-35-59.jpg", "stem": "Photo-Jun-21-2026-21-35-59", "scene": "A large, colorful floral painting in a white frame hangs on a gray wall.", "words": [{"hangul": "\uadf8\ub9bc", "romanization": "geurim", "english": "painting / picture", "pos": "noun", "example_ko": "\uc800 \uadf8\ub9bc\uc774 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "That painting is really pretty."}, {"hangul": "\uaf43", "romanization": "kkot", "english": "flower", "pos": "noun", "example_ko": "\uadf8\ub9bc\uc5d0 \uaf43\uc774 \ub9ce\uc544\uc694.", "example_en": "There are a lot of flowers in the painting."}, {"hangul": "\ubcbd", "romanization": "byeok", "english": "wall", "pos": "noun", "example_ko": "\ubcbd\uc774 \ud68c\uc0c9\uc774\uc5d0\uc694.", "example_en": "The wall is gray."}, {"hangul": "\uc561\uc790", "romanization": "aekja", "english": "picture frame", "pos": "noun", "example_ko": "\uc561\uc790\uac00 \ud558\uc580\uc0c9\uc774\uc5d0\uc694.", "example_en": "The picture frame is white."}, {"hangul": "\uac78\ub2e4", "romanization": "geolda", "english": "to hang (something)", "pos": "verb", "example_ko": "\uadf8\ub9bc\uc744 \ubcbd\uc5d0 \uac78\uc5c8\uc5b4\uc694.", "example_en": "I hung the painting on the wall."}]}, {"photo": "Photo-Jun-22-2026-10-10-34.jpg", "stem": "Photo-Jun-22-2026-10-10-34", "scene": "A group of Canada geese and a white goose walking along a paved path next to a grassy lawn, photographed from above.", "words": [{"hangul": "\uc0c8", "romanization": "sae", "english": "bird", "pos": "noun", "example_ko": "\uc0c8\uac00 \ub9ce\uc774 \uc788\uc5b4\uc694.", "example_en": "There are a lot of birds."}, {"hangul": "\uac70\uc704", "romanization": "geowi", "english": "goose", "pos": "noun", "example_ko": "\uc800 \uac70\uc704\ub294 \ud558\uc580\uc0c9\uc774\uc5d0\uc694.", "example_en": "That goose is white."}, {"hangul": "\uae38", "romanization": "gil", "english": "path / road", "pos": "noun", "example_ko": "\uac70\uc704\ub4e4\uc774 \uae38\uc5d0 \uc788\uc5b4\uc694.", "example_en": "The geese are on the path."}, {"hangul": "\uc794\ub514", "romanization": "jandi", "english": "grass / lawn", "pos": "noun", "example_ko": "\uc794\ub514\uac00 \ucd08\ub85d\uc0c9\uc774\uc5d0\uc694.", "example_en": "The grass is green."}, {"hangul": "\uac77\ub2e4", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "\uac70\uc704\ub4e4\uc774 \ucc9c\ucc9c\ud788 \uac77\uace0 \uc788\uc5b4\uc694.", "example_en": "The geese are walking slowly."}]}, {"photo": "Photo-Jun-22-2026-10-12-48.jpg", "stem": "Photo-Jun-22-2026-10-12-48", "scene": "A small gray bird is perched on thin tree branches with lush green foliage in the background.", "words": [{"hangul": "\uc0c8", "romanization": "sae", "english": "bird", "pos": "noun", "example_ko": "\uc0c8\uac00 \ub098\ubb47\uac00\uc9c0\uc5d0 \uc549\uc544 \uc788\uc5b4\uc694.", "example_en": "A bird is sitting on a branch."}, {"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "\uc800 \ub098\ubb34\uac00 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "That tree is really pretty."}, {"hangul": "\ub098\ubb47\uac00\uc9c0", "romanization": "namutgaji", "english": "branch", "pos": "noun", "example_ko": "\ub098\ubb47\uac00\uc9c0\uac00 \uac00\ub298\uc5b4\uc694.", "example_en": "The branch is thin."}, {"hangul": "\uc549\ub2e4", "romanization": "anda", "english": "to sit / to perch", "pos": "verb", "example_ko": "\uc5ec\uae30 \uc549\uc73c\uc138\uc694.", "example_en": "Please sit here."}, {"hangul": "\ub098\ubb47\uc78e", "romanization": "namunnip", "english": "leaf", "pos": "noun", "example_ko": "\ub098\ubb47\uc78e\uc774 \ucd08\ub85d\uc0c9\uc774\uc5d0\uc694.", "example_en": "The leaves are green."}]}, {"photo": "Photo-Jun-22-2026-11-24-36.jpg", "stem": "Photo-Jun-22-2026-11-24-36", "scene": "A person in a striped shirt takes an outdoor selfie in a park, with leafy green trees, a grass lawn, and an overcast sky in the background.", "words": [{"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "\uc800 \ub098\ubb34\uac00 \uc815\ub9d0 \ucee4\uc694.", "example_en": "That tree is really big."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\uc624\ub298 \ud558\ub298\uc774 \ud750\ub824\uc694.", "example_en": "The sky is cloudy today."}, {"hangul": "\uc794\ub514", "romanization": "jandi", "english": "grass, lawn", "pos": "noun", "example_ko": "\uc794\ub514\uac00 \uc815\ub9d0 \ucd08\ub85d\uc0c9\uc774\uc5d0\uc694.", "example_en": "The grass is really green."}, {"hangul": "\uacf5\uc6d0", "romanization": "gongwon", "english": "park", "pos": "noun", "example_ko": "\uc800\ub294 \uacf5\uc6d0\uc5d0 \uc790\uc8fc \uac00\uc694.", "example_en": "I go to the park often."}, {"hangul": "\uc0b0\ucc45\ud558\ub2e4", "romanization": "sanchaek-ada", "english": "to take a walk", "pos": "verb", "example_ko": "\uacf5\uc6d0\uc5d0\uc11c \uc0b0\ucc45\ud574\uc694.", "example_en": "I take a walk in the park."}]}, {"photo": "Photo-Jun-22-2026-11-30-08.jpg", "stem": "Photo-Jun-22-2026-11-30-08", "scene": "A street passes under a bridge overpass, with murals painted on the concrete wall, a pickup truck driving through, and a sidewalk along the right side.", "words": [{"hangul": "\ub2e4\ub9ac", "romanization": "dari", "english": "bridge", "pos": "noun", "example_ko": "\uc800 \ub2e4\ub9ac \ubc11\uc73c\ub85c \uc9c0\ub098\uac00\uc694.", "example_en": "I go under that bridge."}, {"hangul": "\ud2b8\ub7ed", "romanization": "teureok", "english": "truck", "pos": "noun", "example_ko": "\ud2b8\ub7ed\uc774 \ube60\ub974\uac8c \uc9c0\ub098\uac00\uc694.", "example_en": "The truck passes by quickly."}, {"hangul": "\uc778\ub3c4", "romanization": "indo", "english": "sidewalk", "pos": "noun", "example_ko": "\uc778\ub3c4\uc5d0\uc11c \uac78\uc5b4\uc694.", "example_en": "I walk on the sidewalk."}, {"hangul": "\ubcbd\ud654", "romanization": "byeokhwa", "english": "mural / wall painting", "pos": "noun", "example_ko": "\ubcbd\ud654\uac00 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "The mural is really pretty."}, {"hangul": "\uc9c0\ub098\uac00\ub2e4", "romanization": "jinagada", "english": "to pass by / go through", "pos": "verb", "example_ko": "\ucc28\uac00 \ud130\ub110 \ubc11\uc73c\ub85c \uc9c0\ub098\uac00\uc694.", "example_en": "The car passes under the tunnel."}]}];
+        const photos = [{"photo": "Photo Jun 07 2026, 14 21 31.jpg", "stem": "Photo Jun 07 2026, 14 21 31", "scene": "A restaurant table with flatbread on a plate, three small bowls of dips on a wooden board, and a fork and knife on marble.", "words": [{"hangul": "\ube75", "romanization": "ppang", "english": "bread", "pos": "noun", "example_ko": "\uc774 \ube75 \uc815\ub9d0 \ub9db\uc788\uc5b4\uc694.", "example_en": "This bread is really delicious."}, {"hangul": "\uc74c\uc2dd", "romanization": "eumsik", "english": "food", "pos": "noun", "example_ko": "\uc74c\uc2dd\uc774 \ub108\ubb34 \ub9ce\uc544\uc694.", "example_en": "There's so much food."}, {"hangul": "\uadf8\ub987", "romanization": "geureut", "english": "bowl", "pos": "noun", "example_ko": "\uadf8\ub987\uc5d0 \uc18c\uc2a4\uac00 \uc788\uc5b4\uc694.", "example_en": "There's sauce in the bowl."}, {"hangul": "\uba39\ub2e4", "romanization": "meokda", "english": "to eat", "pos": "verb", "example_ko": "\uc6b0\ub9ac \uac19\uc774 \uba39\uc5b4\uc694.", "example_en": "Let's eat together."}, {"hangul": "\ub9db\uc788\ub2e4", "romanization": "masitda", "english": "to be delicious", "pos": "phrase", "example_ko": "\uc774\uac70 \uc9c4\uc9dc \ub9db\uc788\uc5b4\uc694.", "example_en": "This is really delicious."}]}, {"photo": "Photo Jun 09 2026, 18 17 06.jpg", "stem": "Photo Jun 09 2026, 18 17 06", "scene": "A wide green grassy field under a clear blue sky, with a tall brick apartment building and other city buildings in the distance.", "words": [{"hangul": "\uc794\ub514", "romanization": "jandi", "english": "grass, lawn", "pos": "noun", "example_ko": "\uc794\ub514\uac00 \uc815\ub9d0 \ud478\ub974\ub7ec\uc694.", "example_en": "The grass is really green."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\uc624\ub298 \ud558\ub298\uc774 \ub9d1\uc544\uc694.", "example_en": "The sky is clear today."}, {"hangul": "\uac74\ubb3c", "romanization": "geonmul", "english": "building", "pos": "noun", "example_ko": "\uc800 \uac74\ubb3c\uc774 \uc544\uc8fc \ub192\uc544\uc694.", "example_en": "That building is very tall."}, {"hangul": "\uacf5\uc6d0", "romanization": "gongwon", "english": "park", "pos": "noun", "example_ko": "\uacf5\uc6d0\uc5d0\uc11c \uc0b0\ucc45\ud574\uc694.", "example_en": "I take a walk in the park."}, {"hangul": "\uac77\ub2e4", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "\uc800\ub294 \uc794\ub514 \uc704\ub97c \uac78\uc5b4\uc694.", "example_en": "I walk on the grass."}]}, {"photo": "Photo Jun 13 2026, 11 31 37.jpg", "stem": "Photo Jun 13 2026, 11 31 37", "scene": "A sunny tree-lined road with a stop sign, a parked car, and a bike path running alongside it.", "words": [{"hangul": "\uae38", "romanization": "gil", "english": "road, path", "pos": "noun", "example_ko": "\uc774 \uae38\uc740 \uc544\uc8fc \uc870\uc6a9\ud574\uc694.", "example_en": "This road is very quiet."}, {"hangul": "\ucc28", "romanization": "cha", "english": "car", "pos": "noun", "example_ko": "\uae38 \uc606\uc5d0 \ucc28\uac00 \uc788\uc5b4\uc694.", "example_en": "There is a car next to the road."}, {"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "\ub098\ubb34\uac00 \uc815\ub9d0 \ub9ce\uc544\uc694.", "example_en": "There are really a lot of trees."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\uc624\ub298 \ud558\ub298\uc774 \ud30c\ub798\uc694.", "example_en": "The sky is blue today."}, {"hangul": "\uba48\ucd94\ub2e4", "romanization": "meomchuda", "english": "to stop", "pos": "verb", "example_ko": "\uc5ec\uae30\uc5d0\uc11c \ucc28\uac00 \uba48\ucdb0\uc694.", "example_en": "The car stops here."}]}, {"photo": "Photo Jun 19 2026, 10 05 46.jpg", "stem": "Photo Jun 19 2026, 10 05 46", "scene": "A Minecraft village with a fenced garden plot, trees, and wooden houses under a purple sky.", "words": [{"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree / wood", "pos": "noun", "example_ko": "\uc800 \ub098\ubb34\ub294 \uc815\ub9d0 \ud06c\ub124\uc694.", "example_en": "That tree is really big."}, {"hangul": "\uc9d1", "romanization": "jip", "english": "house", "pos": "noun", "example_ko": "\uc800 \uc9d1\uc740 \ub098\ubb34\ub85c \ub9cc\ub4e4\uc5c8\uc5b4\uc694.", "example_en": "That house is made of wood."}, {"hangul": "\ubc2d", "romanization": "bat", "english": "field / vegetable patch", "pos": "noun", "example_ko": "\ubc2d\uc5d0\uc11c \ucc44\uc18c\ub97c \ud0a4\uc6cc\uc694.", "example_en": "I grow vegetables in the field."}, {"hangul": "\uc2ec\ub2e4", "romanization": "simda", "english": "to plant", "pos": "verb", "example_ko": "\uc528\uc557\uc744 \ubc2d\uc5d0 \uc2ec\uc5b4\uc694.", "example_en": "I plant seeds in the field."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\ud558\ub298\uc774 \ubcf4\ub77c\uc0c9\uc774\uc5d0\uc694.", "example_en": "The sky is purple."}]}, {"photo": "Photo Jun 21 2026, 17 23 33.jpg", "stem": "Photo Jun 21 2026, 17 23 33", "scene": "A smiling woman in a white t-shirt and blue floral skirt stands on a sidewalk in front of a house with a small garden and porch chairs.", "words": [{"hangul": "\uc9d1", "romanization": "jip", "english": "house / home", "pos": "noun", "example_ko": "\uc800 \uc9d1\uc774 \uc608\ubed0\uc694.", "example_en": "That house is pretty."}, {"hangul": "\uce58\ub9c8", "romanization": "chima", "english": "skirt", "pos": "noun", "example_ko": "\uce58\ub9c8\uac00 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "The skirt is really pretty."}, {"hangul": "\uc815\uc6d0", "romanization": "jeonwon", "english": "garden / yard", "pos": "noun", "example_ko": "\uc815\uc6d0\uc5d0 \uaf43\uc774 \uc788\uc5b4\uc694.", "example_en": "There are flowers in the garden."}, {"hangul": "\uc6c3\ub2e4", "romanization": "utda", "english": "to smile / to laugh", "pos": "verb", "example_ko": "\uc65c \uc6c3\uc5b4\uc694?", "example_en": "Why are you smiling?"}, {"hangul": "\uae38", "romanization": "gil", "english": "street / road / path", "pos": "noun", "example_ko": "\uae38\uc5d0\uc11c \uc0ac\uc9c4\uc744 \ucc0d\uc5c8\uc5b4\uc694.", "example_en": "I took a photo on the street."}]}, {"photo": "Photo Jun 21 2026, 21 35 59.jpg", "stem": "Photo Jun 21 2026, 21 35 59", "scene": "A large, colorful floral painting in a white frame hangs on a gray wall.", "words": [{"hangul": "\uadf8\ub9bc", "romanization": "geurim", "english": "painting / picture", "pos": "noun", "example_ko": "\uc800 \uadf8\ub9bc\uc774 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "That painting is really pretty."}, {"hangul": "\uaf43", "romanization": "kkot", "english": "flower", "pos": "noun", "example_ko": "\uadf8\ub9bc\uc5d0 \uaf43\uc774 \ub9ce\uc544\uc694.", "example_en": "There are a lot of flowers in the painting."}, {"hangul": "\ubcbd", "romanization": "byeok", "english": "wall", "pos": "noun", "example_ko": "\ubcbd\uc774 \ud68c\uc0c9\uc774\uc5d0\uc694.", "example_en": "The wall is gray."}, {"hangul": "\uc561\uc790", "romanization": "aekja", "english": "picture frame", "pos": "noun", "example_ko": "\uc561\uc790\uac00 \ud558\uc580\uc0c9\uc774\uc5d0\uc694.", "example_en": "The picture frame is white."}, {"hangul": "\uac78\ub2e4", "romanization": "geolda", "english": "to hang (something)", "pos": "verb", "example_ko": "\uadf8\ub9bc\uc744 \ubcbd\uc5d0 \uac78\uc5c8\uc5b4\uc694.", "example_en": "I hung the painting on the wall."}]}, {"photo": "Photo Jun 22 2026, 10 10 34.jpg", "stem": "Photo Jun 22 2026, 10 10 34", "scene": "A group of Canada geese and a white goose walking along a paved path next to a grassy lawn, photographed from above.", "words": [{"hangul": "\uc0c8", "romanization": "sae", "english": "bird", "pos": "noun", "example_ko": "\uc0c8\uac00 \ub9ce\uc774 \uc788\uc5b4\uc694.", "example_en": "There are a lot of birds."}, {"hangul": "\uac70\uc704", "romanization": "geowi", "english": "goose", "pos": "noun", "example_ko": "\uc800 \uac70\uc704\ub294 \ud558\uc580\uc0c9\uc774\uc5d0\uc694.", "example_en": "That goose is white."}, {"hangul": "\uae38", "romanization": "gil", "english": "path / road", "pos": "noun", "example_ko": "\uac70\uc704\ub4e4\uc774 \uae38\uc5d0 \uc788\uc5b4\uc694.", "example_en": "The geese are on the path."}, {"hangul": "\uc794\ub514", "romanization": "jandi", "english": "grass / lawn", "pos": "noun", "example_ko": "\uc794\ub514\uac00 \ucd08\ub85d\uc0c9\uc774\uc5d0\uc694.", "example_en": "The grass is green."}, {"hangul": "\uac77\ub2e4", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "\uac70\uc704\ub4e4\uc774 \ucc9c\ucc9c\ud788 \uac77\uace0 \uc788\uc5b4\uc694.", "example_en": "The geese are walking slowly."}]}, {"photo": "Photo Jun 22 2026, 10 12 48.jpg", "stem": "Photo Jun 22 2026, 10 12 48", "scene": "A small gray bird is perched on thin tree branches with lush green foliage in the background.", "words": [{"hangul": "\uc0c8", "romanization": "sae", "english": "bird", "pos": "noun", "example_ko": "\uc0c8\uac00 \ub098\ubb47\uac00\uc9c0\uc5d0 \uc549\uc544 \uc788\uc5b4\uc694.", "example_en": "A bird is sitting on a branch."}, {"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "\uc800 \ub098\ubb34\uac00 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "That tree is really pretty."}, {"hangul": "\ub098\ubb47\uac00\uc9c0", "romanization": "namutgaji", "english": "branch", "pos": "noun", "example_ko": "\ub098\ubb47\uac00\uc9c0\uac00 \uac00\ub298\uc5b4\uc694.", "example_en": "The branch is thin."}, {"hangul": "\uc549\ub2e4", "romanization": "anda", "english": "to sit / to perch", "pos": "verb", "example_ko": "\uc5ec\uae30 \uc549\uc73c\uc138\uc694.", "example_en": "Please sit here."}, {"hangul": "\ub098\ubb47\uc78e", "romanization": "namunnip", "english": "leaf", "pos": "noun", "example_ko": "\ub098\ubb47\uc78e\uc774 \ucd08\ub85d\uc0c9\uc774\uc5d0\uc694.", "example_en": "The leaves are green."}]}, {"photo": "Photo Jun 22 2026, 11 24 36.jpg", "stem": "Photo Jun 22 2026, 11 24 36", "scene": "A person in a striped shirt takes an outdoor selfie in a park, with leafy green trees, a grass lawn, and an overcast sky in the background.", "words": [{"hangul": "\ub098\ubb34", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "\uc800 \ub098\ubb34\uac00 \uc815\ub9d0 \ucee4\uc694.", "example_en": "That tree is really big."}, {"hangul": "\ud558\ub298", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "\uc624\ub298 \ud558\ub298\uc774 \ud750\ub824\uc694.", "example_en": "The sky is cloudy today."}, {"hangul": "\uc794\ub514", "romanization": "jandi", "english": "grass, lawn", "pos": "noun", "example_ko": "\uc794\ub514\uac00 \uc815\ub9d0 \ucd08\ub85d\uc0c9\uc774\uc5d0\uc694.", "example_en": "The grass is really green."}, {"hangul": "\uacf5\uc6d0", "romanization": "gongwon", "english": "park", "pos": "noun", "example_ko": "\uc800\ub294 \uacf5\uc6d0\uc5d0 \uc790\uc8fc \uac00\uc694.", "example_en": "I go to the park often."}, {"hangul": "\uc0b0\ucc45\ud558\ub2e4", "romanization": "sanchaek-ada", "english": "to take a walk", "pos": "verb", "example_ko": "\uacf5\uc6d0\uc5d0\uc11c \uc0b0\ucc45\ud574\uc694.", "example_en": "I take a walk in the park."}]}, {"photo": "Photo Jun 22 2026, 11 30 08.jpg", "stem": "Photo Jun 22 2026, 11 30 08", "scene": "A street passes under a bridge overpass, with murals painted on the concrete wall, a pickup truck driving through, and a sidewalk along the right side.", "words": [{"hangul": "\ub2e4\ub9ac", "romanization": "dari", "english": "bridge", "pos": "noun", "example_ko": "\uc800 \ub2e4\ub9ac \ubc11\uc73c\ub85c \uc9c0\ub098\uac00\uc694.", "example_en": "I go under that bridge."}, {"hangul": "\ud2b8\ub7ed", "romanization": "teureok", "english": "truck", "pos": "noun", "example_ko": "\ud2b8\ub7ed\uc774 \ube60\ub974\uac8c \uc9c0\ub098\uac00\uc694.", "example_en": "The truck passes by quickly."}, {"hangul": "\uc778\ub3c4", "romanization": "indo", "english": "sidewalk", "pos": "noun", "example_ko": "\uc778\ub3c4\uc5d0\uc11c \uac78\uc5b4\uc694.", "example_en": "I walk on the sidewalk."}, {"hangul": "\ubcbd\ud654", "romanization": "byeokhwa", "english": "mural / wall painting", "pos": "noun", "example_ko": "\ubcbd\ud654\uac00 \uc815\ub9d0 \uc608\ubed0\uc694.", "example_en": "The mural is really pretty."}, {"hangul": "\uc9c0\ub098\uac00\ub2e4", "romanization": "jinagada", "english": "to pass by / go through", "pos": "verb", "example_ko": "\ucc28\uac00 \ud130\ub110 \ubc11\uc73c\ub85c \uc9c0\ub098\uac00\uc694.", "example_en": "The car passes under the tunnel."}]}];
         let currentSlide = 0;
 
         function renderSlides() {
             const container = document.querySelector('.slides-container');
             container.innerHTML = '';
-
             photos.forEach((photo, idx) => {
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
-
-                const photoPath = `photos/${photo.photo}`;
-                const audioPath = `audio/${photo.stem}-audio.mp3`;
+                const photoUrl = `https://dl.dropboxusercontent.com/scl/fi/DROPBOX_ID/KRAMOS/korean-photo-feedback/${photo.photo}?rlkey=RLKEY&dl=1`.replace(/ /g, '%20');
                 const html = `
                     <div class="photo-container">
-                        <img src="${photoPath}" alt="${photo.scene}" class="photo" />
+                        <img src="${photoUrl}" alt="${photo.scene}" class="photo" onerror="this.style.display='none'" />
                         <div class="scene">${photo.scene}</div>
                     </div>
                     <div class="vocab-cards">
                         ${photo.words.map((word, widx) => `
-                            <div class="card" data-slide="${idx}" data-word="${widx}" data-audio="${audioPath}">
+                            <div class="card" data-word="${widx}">
                                 <div class="hangul">${word.hangul}</div>
                                 <div class="reveal">
                                     <div class="romanization">${word.romanization}</div>
                                     <div class="english">${word.english}</div>
-                                    <div class="example">
-                                        <div>${word.example_ko}</div>
-                                        <div>${word.example_en}</div>
-                                    </div>
-                                    <button class="audio-btn">🔊 Play</button>
+                                    <div class="example"><div>${word.example_ko}</div><div>${word.example_en}</div></div>
+                                    <button class="audio-btn">🔊 Audio</button>
                                 </div>
                             </div>
                         `).join('')}
@@ -306,29 +85,14 @@
                 slide.innerHTML = html;
                 container.appendChild(slide);
             });
-
             document.getElementById('totalSlides').textContent = photos.length;
             attachCardListeners();
-            attachAudioListeners();
             updateNav();
         }
 
         function attachCardListeners() {
             document.querySelectorAll('.card').forEach(card => {
-                card.addEventListener('click', function() {
-                    this.classList.toggle('flipped');
-                });
-            });
-        }
-
-        function attachAudioListeners() {
-            document.querySelectorAll('.audio-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const audioPath = this.closest('.card').dataset.audio;
-                    const audio = new Audio(audioPath);
-                    audio.play().catch(err => console.log('Audio error:', err));
-                });
+                card.addEventListener('click', function() { this.classList.toggle('flipped'); });
             });
         }
 
@@ -347,13 +111,11 @@
 
         document.getElementById('prevBtn').addEventListener('click', () => showSlide(currentSlide - 1));
         document.getElementById('nextBtn').addEventListener('click', () => showSlide(currentSlide + 1));
-
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') showSlide(currentSlide - 1);
             if (e.key === 'ArrowRight') showSlide(currentSlide + 1);
         });
 
-        // Initial render
         renderSlides();
         showSlide(0);
     </script>
