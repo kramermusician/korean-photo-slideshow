@@ -1,6 +1,6 @@
-# Korean Photo Slideshow
+# Lens
 
-Interactive vocabulary learning from your photos. Take a photo of something in the world, get the most useful Korean words for what's visible, then learn them — Hangul first, click to reveal translations and example sentences. A header language picker flips the whole deck to **Japanese** or **Spanish** mode for the same concepts. The deck ends with a **Click Quiz** that shows a word and asks you to tap the matching object in the photo — in whichever language you have selected.
+**Lens — learn from your photos.** Interactive vocabulary learning from your photos. Take a photo of something in the world, get the most useful Korean words for what's visible, then learn them — Hangul first, click to reveal translations and example sentences. A header language picker flips the whole deck to **Japanese** or **Spanish** mode for the same concepts. The deck ends with a **Click Quiz** that shows a word and asks you to tap the matching object in the photo — in whichever language you have selected.
 
 ## How it works
 

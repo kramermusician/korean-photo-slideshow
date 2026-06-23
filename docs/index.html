@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Words from Photos</title>
+    <title>Lens — learn from your photos</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #f5ede4 0%, #e8ddd0 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .container { max-width: 900px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); overflow: hidden; }
         .header { background: linear-gradient(135deg, #8b7355 0%, #a89080 100%); color: white; padding: 24px; text-align: center; }
-        .header h1 { font-size: 24px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 16px; }
+        .header .brand { font-size: 13px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.8; margin-bottom: 4px; }
+        .header h1 { font-size: 22px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 16px; opacity: 0.92; }
         .lang-picker { display: inline-flex; gap: 4px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); border-radius: 22px; padding: 4px; backdrop-filter: blur(4px); }
         .lang-btn { background: transparent; color: rgba(255,255,255,0.85); border: none; padding: 7px 16px; border-radius: 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
         .lang-btn:hover { color: white; background: rgba(255,255,255,0.18); }
@@ -69,6 +70,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="brand">Lens</div>
             <h1 id="title">Korean from Photos</h1>
             <div class="lang-picker" id="langPicker">
                 <button class="lang-btn" data-lang="ko">한국어</button>
