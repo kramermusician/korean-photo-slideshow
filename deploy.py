@@ -121,6 +121,29 @@ def build_html(photos):
         .counter {{ font-size: 14px; color: #8b7355; font-weight: 500; min-width: 60px; text-align: center; }}
         .spacer {{ flex: 1; }}
         @media (max-width: 600px) {{ .slide {{ padding: 24px; }} .controls {{ padding: 0 24px 24px; }} .vocab-cards {{ grid-template-columns: 1fr; }} .photo {{ max-height: 300px; }} .word-front {{ font-size: 28px; }} .header h1 {{ font-size: 19px; }} .lang-btn {{ padding: 6px 11px; font-size: 13px; }} }}
+
+        /* ── Click Quiz ── */
+        .quiz-heading {{ text-align: center; font-size: 13px; letter-spacing: 0.13em; text-transform: uppercase; color: #8b7355; font-weight: 600; margin-bottom: 24px; }}
+        .click-game {{ display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }}
+        .cg-prompt-row {{ display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; justify-content: center; }}
+        .cg-find {{ font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #A09C95; }}
+        .cg-prompt-word {{ font-size: 34px; font-weight: 600; color: #3D6B5E; cursor: pointer; transition: color 0.15s; line-height: 1.1; }}
+        .cg-prompt-word:hover {{ color: #2A5448; }}
+        .cg-prompt-en {{ font-size: 15px; color: #9A9790; font-style: italic; }}
+        .photo-target-wrap {{ position: relative; border-radius: 14px; overflow: hidden; cursor: crosshair; border: 2px solid #EDE9E2; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 560px; width: 100%; }}
+        .target-photo {{ display: block; width: 100%; height: auto; pointer-events: none; user-select: none; }}
+        @keyframes dotIn {{ from {{ transform: translate(-50%,-50%) scale(0.2); opacity: 0; }} to {{ transform: translate(-50%,-50%) scale(1); opacity: 1; }} }}
+        .click-dot {{ position: absolute; width: 20px; height: 20px; border-radius: 50%; transform: translate(-50%,-50%); border: 2.5px solid white; pointer-events: none; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.35); animation: dotIn 0.18s ease; }}
+        .click-dot.hit {{ background: #4A8C6A; }}
+        .click-dot.miss {{ background: #B85454; }}
+        .hotspot-box {{ position: absolute; border: 2.5px dashed #4A8C6A; border-radius: 6px; pointer-events: none; z-index: 9; opacity: 0; background: rgba(74,140,106,0.1); transition: opacity 0.3s ease; }}
+        .hotspot-box.show {{ opacity: 1; }}
+        .cg-status-row {{ display: flex; align-items: center; gap: 16px; min-height: 38px; flex-wrap: wrap; justify-content: center; }}
+        .cg-counter {{ font-size: 12px; letter-spacing: 0.1em; color: #A09C95; text-transform: uppercase; min-width: 48px; }}
+        .cg-feedback {{ font-size: 15px; font-style: italic; color: #7A7770; min-width: 180px; text-align: center; }}
+        .q-next {{ display: none; }}
+        .score-screen {{ text-align: center; padding: 20px; }}
+        .q-score-text {{ font-size: 22px; color: #3D6B5E; font-weight: 600; margin-bottom: 18px; }}
     </style>
 </head>
 <body>
@@ -149,12 +172,158 @@ def build_html(photos):
         let lang = 'ko';  // 'ko' | 'ja' | 'es'
 
         const LANG = {{
-            ko: {{ title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true }},
-            ja: {{ title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese, reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), example: w => w.example_ja, audio: false }},
-            es: {{ title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish, reading: w => w.gender || '', example: w => w.example_es, audio: false }},
+            ko: {{ title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true, tts: 'ko-KR' }},
+            ja: {{ title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese, reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), example: w => w.example_ja, audio: false, tts: 'ja-JP' }},
+            es: {{ title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish, reading: w => w.gender || '', example: w => w.example_es, audio: false, tts: 'es-ES' }},
         }};
 
         function wordsFor(photo) {{ return photo[LANG[lang].words] || []; }}
+
+        // ── Click Quiz ──────────────────────────────────────────────
+        // A challenge is language-independent: it points at a photo + a word
+        // INDEX (shared across ko/ja/es) + that object's hotspot box(es).
+        // bbox is a per-photo array parallel to `words`; an entry is either a
+        // list of {{x1,y1,x2,y2}} percentage boxes or null/absent (not clickable).
+        function buildChallenges() {{
+            const list = [];
+            photos.forEach((photo, pIdx) => {{
+                const boxes = photo.bbox || [];
+                boxes.forEach((b, wIdx) => {{
+                    if (Array.isArray(b) && b.length) list.push({{ photo: pIdx, word: wIdx, hotspot: b }});
+                }});
+            }});
+            return list;
+        }}
+        const QUIZ = buildChallenges();
+        const hasQuiz = QUIZ.length > 0;
+        const QUIZ_INDEX = () => photos.length;            // quiz is the last slide
+        function slideTotal() {{ return photos.length + (hasQuiz ? 1 : 0); }}
+
+        let qChallenges = [], qIdx = 0, qScore = 0;
+
+        function speak(text, langCode) {{
+            try {{
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = langCode || 'ko-KR';
+                u.rate = 0.9;
+                window.speechSynthesis.speak(u);
+            }} catch (e) {{}}
+        }}
+
+        function qShuffle(arr) {{
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {{
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }}
+            return a;
+        }}
+
+        function qWord() {{
+            const ch = qChallenges[qIdx];
+            if (!ch) return null;
+            return (photos[ch.photo][LANG[lang].words] || [])[ch.word] || null;
+        }}
+
+        function qSpeak() {{
+            const w = qWord();
+            if (w) speak(LANG[lang].front(w), LANG[lang].tts);
+        }}
+
+        function qRenderPrompt() {{
+            const w = qWord();
+            if (!w) return;
+            document.getElementById('q-word').textContent = LANG[lang].front(w);
+            document.getElementById('q-en').textContent = '(' + w.english + ')';
+        }}
+
+        function qStart() {{
+            if (!hasQuiz) return;
+            qChallenges = qShuffle(QUIZ);
+            qIdx = 0; qScore = 0;
+            const scr = document.getElementById('q-score');
+            if (scr) scr.style.display = 'none';
+            const main = document.getElementById('q-main');
+            if (main) main.style.display = '';
+            qLoad();
+        }}
+
+        function qLoad() {{
+            const ch = qChallenges[qIdx];
+            if (!ch) return;
+            document.getElementById('q-photo').src = encodeURI(photos[ch.photo].local_image || '');
+            qRenderPrompt();
+            const fb = document.getElementById('q-feedback');
+            fb.textContent = ''; fb.style.color = '#7A7770';
+            document.getElementById('q-counter').textContent = (qIdx + 1) + ' / ' + qChallenges.length;
+            const nxt = document.getElementById('q-next');
+            nxt.style.display = 'none'; nxt.onclick = null;
+            const wrap = document.getElementById('q-wrap');
+            wrap.querySelectorAll('.click-dot, .hotspot-box').forEach(e => e.remove());
+            wrap.style.cursor = 'crosshair';
+            wrap.onclick = qClick;
+        }}
+
+        function qClick(e) {{
+            const ch = qChallenges[qIdx];
+            const wrap = document.getElementById('q-wrap');
+            const img = document.getElementById('q-photo');
+            const rect = img.getBoundingClientRect();
+            const xPct = (e.clientX - rect.left) / rect.width * 100;
+            const yPct = (e.clientY - rect.top) / rect.height * 100;
+            const hit = ch.hotspot.some(hs => xPct >= hs.x1 && xPct <= hs.x2 && yPct >= hs.y1 && yPct <= hs.y2);
+
+            wrap.onclick = null;
+            wrap.style.cursor = 'default';
+
+            const dot = document.createElement('div');
+            dot.className = 'click-dot ' + (hit ? 'hit' : 'miss');
+            dot.style.left = xPct + '%';
+            dot.style.top = yPct + '%';
+            wrap.appendChild(dot);
+
+            ch.hotspot.forEach(hs => {{
+                const box = document.createElement('div');
+                box.className = 'hotspot-box';
+                box.style.left = hs.x1 + '%';
+                box.style.top = hs.y1 + '%';
+                box.style.width = (hs.x2 - hs.x1) + '%';
+                box.style.height = (hs.y2 - hs.y1) + '%';
+                wrap.appendChild(box);
+                requestAnimationFrame(() => box.classList.add('show'));
+            }});
+
+            const fb = document.getElementById('q-feedback');
+            const w = qWord();
+            if (hit) {{
+                qScore++;
+                fb.textContent = '✓ ' + (w ? w.english : 'correct') + '!';
+                fb.style.color = '#3D6B5E';
+                if (w) speak(LANG[lang].front(w), LANG[lang].tts);
+            }} else {{
+                fb.textContent = 'not quite — see the green area';
+                fb.style.color = '#B85454';
+            }}
+
+            const nxt = document.getElementById('q-next');
+            nxt.style.display = '';
+            if (qIdx >= qChallenges.length - 1) {{
+                nxt.textContent = 'see score →';
+                nxt.onclick = qFinish;
+            }} else {{
+                nxt.textContent = 'next →';
+                nxt.onclick = () => {{ qIdx++; qLoad(); }};
+            }}
+        }}
+
+        function qFinish() {{
+            document.getElementById('q-main').style.display = 'none';
+            const scr = document.getElementById('q-score');
+            scr.querySelector('.q-score-text').textContent =
+                'You found ' + qScore + ' of ' + qChallenges.length + '!';
+            scr.style.display = '';
+        }}
 
         function renderSlides() {{
             const container = document.querySelector('.slides-container');
@@ -190,8 +359,40 @@ def build_html(photos):
                 slide.innerHTML = html;
                 container.appendChild(slide);
             }});
-            document.getElementById('totalSlides').textContent = photos.length;
+            if (hasQuiz) {{
+                const qs = document.createElement('div');
+                qs.className = 'slide' + (currentSlide === QUIZ_INDEX() ? ' active' : '');
+                qs.innerHTML = `
+                    <div class="quiz-heading">Click Quiz · tap the object</div>
+                    <div id="q-main" class="click-game">
+                        <div class="cg-prompt-row">
+                            <span class="cg-find">Find</span>
+                            <span class="cg-prompt-word" id="q-word" onclick="qSpeak()"></span>
+                            <span class="cg-prompt-en" id="q-en"></span>
+                        </div>
+                        <div class="photo-target-wrap" id="q-wrap">
+                            <img id="q-photo" class="target-photo" src="" alt="">
+                        </div>
+                        <div class="cg-status-row">
+                            <span class="cg-counter" id="q-counter"></span>
+                            <span class="cg-feedback" id="q-feedback"></span>
+                            <button class="nav-btn q-next" id="q-next">next →</button>
+                        </div>
+                    </div>
+                    <div id="q-score" class="score-screen" style="display:none">
+                        <div class="q-score-text"></div>
+                        <button class="nav-btn" id="q-replay">play again</button>
+                    </div>`;
+                container.appendChild(qs);
+                qs.querySelector('#q-replay').addEventListener('click', qStart);
+            }}
+            document.getElementById('totalSlides').textContent = slideTotal();
             attachCardListeners();
+            // If a quiz is already in progress (e.g. after a language switch),
+            // re-render the current challenge in the now-active language.
+            if (hasQuiz && currentSlide === QUIZ_INDEX()) {{
+                if (qChallenges.length) qLoad(); else qStart();
+            }}
             updateNav();
         }}
 
@@ -202,16 +403,21 @@ def build_html(photos):
         }}
 
         function showSlide(n) {{
-            currentSlide = Math.max(0, Math.min(n, photos.length - 1));
+            currentSlide = Math.max(0, Math.min(n, slideTotal() - 1));
             document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.slide')[currentSlide].classList.add('active');
             document.getElementById('currentSlide').textContent = currentSlide + 1;
+            // Landing on the quiz slide: start a fresh session, or repaint the
+            // current challenge into a freshly-rebuilt DOM (e.g. after a lang switch).
+            if (hasQuiz && currentSlide === QUIZ_INDEX()) {{
+                if (qChallenges.length === 0) qStart(); else qLoad();
+            }}
             updateNav();
         }}
 
         function updateNav() {{
             document.getElementById('prevBtn').disabled = currentSlide === 0;
-            document.getElementById('nextBtn').disabled = currentSlide === photos.length - 1;
+            document.getElementById('nextBtn').disabled = currentSlide === slideTotal() - 1;
         }}
 
         function setLang(next) {{
