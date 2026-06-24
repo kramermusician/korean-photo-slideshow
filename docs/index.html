@@ -238,7 +238,7 @@
             }
 
             const nxt = document.getElementById('q-next');
-            nxt.style.display = '';
+            nxt.style.display = 'inline-block';
             if (qIdx >= qChallenges.length - 1) {
                 nxt.textContent = LANG[lang].seeScore;
                 nxt.onclick = qFinish;
@@ -331,6 +331,17 @@
         function attachCardListeners() {
             document.querySelectorAll('.card').forEach(card => {
                 card.addEventListener('click', function() { this.classList.toggle('flipped'); });
+            });
+            document.querySelectorAll('.audio-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const card = this.closest('.card');
+                    const slide = this.closest('.slide');
+                    const photoIdx = Array.from(document.querySelectorAll('.slide')).indexOf(slide);
+                    const wordIdx = parseInt(card.dataset.word, 10);
+                    const word = (photos[photoIdx][LANG[lang].words] || [])[wordIdx];
+                    if (word) speak(LANG[lang].front(word), LANG[lang].tts);
+                });
             });
         }
 
