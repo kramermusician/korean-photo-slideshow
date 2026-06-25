@@ -318,7 +318,7 @@ def build_html(photos):
             }}
 
             const nxt = document.getElementById('q-next');
-            nxt.style.display = '';
+            nxt.style.display = 'inline-block';
             if (qIdx >= qChallenges.length - 1) {{
                 nxt.textContent = LANG[lang].seeScore;
                 nxt.onclick = qFinish;
