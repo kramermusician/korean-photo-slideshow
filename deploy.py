@@ -87,7 +87,9 @@ def build_html(photos):
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #f5ede4 0%, #e8ddd0 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }}
-        .container {{ max-width: 900px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); overflow: hidden; }}
+        .container {{ max-width: 900px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); overflow: hidden; }}
+
+        /* ── Header ── */
         .header {{ background: linear-gradient(135deg, #8b7355 0%, #a89080 100%); color: white; padding: 24px; text-align: center; }}
         .header .brand {{ font-size: 13px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.8; margin-bottom: 4px; }}
         .header h1 {{ font-size: 22px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 16px; opacity: 0.92; }}
@@ -96,19 +98,21 @@ def build_html(photos):
         .lang-btn:hover {{ color: white; background: rgba(255,255,255,0.18); }}
         .lang-btn.active {{ background: white; color: #8b7355; }}
         .header-actions {{ margin-top: 14px; }}
-        .game-btn {{ background: rgba(255,255,255,0.16); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }}
-        .game-btn:hover {{ background: white; color: #8b7355; }}
-        .game-btn.active {{ background: white; color: #8b7355; }}
+        .mode-tabs {{ display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center; }}
+        .mode-tab {{ background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.4); padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }}
+        .mode-tab:hover {{ background: rgba(255,255,255,0.28); color: white; }}
+        .mode-tab.active {{ background: white; color: #8b7355; }}
+        .mode-tab:disabled {{ opacity: 0.4; cursor: not-allowed; }}
 
-        /* ── Slideshow mode ── */
+        /* ── Random mode (slideshow) ── */
         .slide {{ display: none; padding: 40px; animation: fadeIn 0.3s ease; }}
         .slide.active {{ display: block; }}
         @keyframes fadeIn {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
         .photo-container {{ margin-bottom: 32px; text-align: center; }}
-        .photo {{ max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }}
+        .photo {{ max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }}
         .vocab-cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 32px; }}
         .card {{ background: #f9f8f6; border: 2px solid #e0d9d0; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; min-height: 140px; display: flex; flex-direction: column; justify-content: center; }}
-        .card:hover {{ border-color: #8b7355; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }}
+        .card:hover {{ border-color: #8b7355; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }}
         .card.flipped {{ background: #f0ebe5; border-color: #8b7355; }}
         .word-front {{ font-size: 32px; font-weight: 600; color: #2c2c2c; margin-bottom: 8px; line-height: 1.2; }}
         .card.flipped .word-front {{ display: none; }}
@@ -127,12 +131,23 @@ def build_html(photos):
         .counter {{ font-size: 14px; color: #8b7355; font-weight: 500; min-width: 60px; text-align: center; }}
         .spacer {{ flex: 1; }}
 
-        /* ── Game panel (separate mode, not a slide) ── */
+        /* ── Gallery mode ── */
+        #gallery-panel {{ display: none; padding: 32px 40px 40px; animation: fadeIn 0.3s ease; }}
+        .gallery-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }}
+        .gallery-thumb {{ position: relative; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: all 0.18s ease; aspect-ratio: 4/3; background: #f0ebe5; }}
+        .gallery-thumb:hover {{ border-color: #8b7355; box-shadow: 0 4px 14px rgba(0,0,0,0.18); transform: translateY(-2px); }}
+        .gallery-thumb img {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
+        .thumb-badge {{ position: absolute; bottom: 5px; right: 5px; background: rgba(139,115,85,0.88); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; letter-spacing: 0.04em; }}
+        .gallery-thumb.no-game {{ opacity: 0.45; cursor: default; }}
+        .gallery-thumb.no-game:hover {{ border-color: transparent; box-shadow: none; transform: none; }}
+
+        /* ── Game panel (Click Target + Gallery single-photo) ── */
         #game-panel {{ display: none; padding: 32px 40px 40px; animation: fadeIn 0.3s ease; }}
-        .game-exit-bar {{ display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }}
-        .game-exit-btn {{ background: none; border: 1.5px solid #d4ccc0; color: #8b7355; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }}
+        .game-exit-bar {{ display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }}
+        .game-exit-btn {{ background: none; border: 1.5px solid #d4ccc0; color: #8b7355; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }}
         .game-exit-btn:hover {{ background: #f0ebe5; border-color: #8b7355; }}
         .quiz-heading {{ font-size: 13px; letter-spacing: 0.13em; text-transform: uppercase; color: #8b7355; font-weight: 600; }}
+        .streak-badge {{ font-size: 15px; font-weight: 700; color: #d4662a; margin-left: auto; letter-spacing: 0.02em; }}
         .click-game {{ display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }}
         .cg-prompt-row {{ display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; justify-content: center; }}
         .cg-find {{ font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #A09C95; }}
@@ -146,12 +161,17 @@ def build_html(photos):
         .click-dot.miss {{ background: #B85454; }}
         .hotspot-box {{ position: absolute; border: 2.5px dashed #4A8C6A; border-radius: 6px; pointer-events: none; z-index: 9; opacity: 0; background: rgba(74,140,106,0.1); transition: opacity 0.3s ease; }}
         .hotspot-box.show {{ opacity: 1; }}
-        .cg-status-row {{ display: flex; align-items: center; gap: 16px; min-height: 38px; flex-wrap: wrap; justify-content: center; }}
+        .cg-status-row {{ display: flex; align-items: center; gap: 12px; min-height: 48px; flex-wrap: wrap; justify-content: center; }}
         .cg-counter {{ font-size: 12px; letter-spacing: 0.1em; color: #A09C95; text-transform: uppercase; min-width: 48px; }}
-        .cg-feedback {{ font-size: 15px; font-style: italic; color: #7A7770; min-width: 180px; text-align: center; }}
+        .cg-feedback-wrap {{ text-align: center; min-width: 160px; }}
+        #q-feedback {{ font-size: 15px; font-style: italic; }}
+        .cg-english {{ font-size: 13px; color: #8b7355; font-weight: 500; margin-top: 3px; }}
         #q-next {{ display: none; }}
-        .score-screen {{ text-align: center; padding: 20px; }}
-        .q-score-text {{ font-size: 22px; color: #3D6B5E; font-weight: 600; margin-bottom: 18px; }}
+        .score-screen {{ text-align: center; padding: 24px 20px; }}
+        .q-score-text {{ font-size: 22px; color: #3D6B5E; font-weight: 600; margin-bottom: 20px; }}
+        .score-actions {{ display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }}
+        .secondary-btn {{ background: #f0ebe5; color: #8b7355; border: 1.5px solid #d4ccc0; }}
+        .secondary-btn:hover {{ background: #e8ddd0; border-color: #8b7355; }}
 
         @media (max-width: 600px) {{
             .slide {{ padding: 24px; }}
@@ -161,7 +181,9 @@ def build_html(photos):
             .word-front {{ font-size: 28px; }}
             .header h1 {{ font-size: 19px; }}
             .lang-btn {{ padding: 6px 11px; font-size: 13px; }}
-            #game-panel {{ padding: 24px; }}
+            .mode-tab {{ padding: 6px 12px; font-size: 12px; }}
+            #gallery-panel, #game-panel {{ padding: 20px; }}
+            .gallery-grid {{ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }}
         }}
     </style>
 </head>
@@ -176,11 +198,15 @@ def build_html(photos):
                 <button class="lang-btn" data-lang="es">Español</button>
             </div>
             <div class="header-actions">
-                <button class="game-btn" id="gameBtn">🎯 <span id="gameBtnLabel"></span></button>
+                <div class="mode-tabs">
+                    <button class="mode-tab" data-mode="gallery">🖼 Gallery</button>
+                    <button class="mode-tab active" data-mode="random">🔀 Random</button>
+                    <button class="mode-tab" data-mode="clicktarget" id="tabClickTarget">🎯 Click Target</button>
+                </div>
             </div>
         </div>
 
-        <!-- Slideshow mode -->
+        <!-- Random mode -->
         <div class="slides-container" id="slides-container"></div>
         <div class="controls" id="nav-controls">
             <button class="nav-btn" id="prevBtn">← Previous</button>
@@ -190,11 +216,17 @@ def build_html(photos):
             <button class="nav-btn" id="nextBtn">Next →</button>
         </div>
 
-        <!-- Game mode: separate panel, never part of the slide sequence -->
+        <!-- Gallery mode: photo grid -->
+        <div id="gallery-panel">
+            <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+
+        <!-- Game panel: shared by Click Target (all photos) and Gallery (single photo) -->
         <div id="game-panel">
             <div class="game-exit-bar">
-                <button class="game-exit-btn" id="exitGameBtn">← slides</button>
+                <button class="game-exit-btn" id="exitGameBtn">← back</button>
                 <span class="quiz-heading" id="q-heading"></span>
+                <span class="streak-badge" id="q-streak"></span>
             </div>
             <div id="q-main" class="click-game">
                 <div class="cg-prompt-row">
@@ -206,13 +238,19 @@ def build_html(photos):
                 </div>
                 <div class="cg-status-row">
                     <span class="cg-counter" id="q-counter"></span>
-                    <span class="cg-feedback" id="q-feedback"></span>
+                    <div class="cg-feedback-wrap">
+                        <div id="q-feedback"></div>
+                        <div class="cg-english" id="q-english"></div>
+                    </div>
                     <button class="nav-btn" id="q-next">next →</button>
                 </div>
             </div>
             <div id="q-score" class="score-screen" style="display:none">
                 <div class="q-score-text"></div>
-                <button class="nav-btn" id="q-replay">play again</button>
+                <div class="score-actions">
+                    <button class="nav-btn" id="q-replay">play again</button>
+                    <button class="nav-btn secondary-btn" id="q-back-gallery" style="display:none">← gallery</button>
+                </div>
             </div>
         </div>
     </div>
@@ -221,20 +259,35 @@ def build_html(photos):
         const photos = {photos_json};
         let currentSlide = 0;
         let lang = 'ko';
-        let gameMode = false;
+        let mode = 'random';       // 'random' | 'gallery' | 'clicktarget'
+        let galleryPhotoIdx = -1;  // which photo is active in gallery single-photo game
+        let streak = 0;
 
         const LANG = {{
-            ko: {{ title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true, tts: 'ko-KR',
-                   game: '사진 게임', heading: '사진 게임 · 눌러보세요', find: '찾기', miss: '아쉬워요', next: '다음 →', seeScore: '점수 보기 →', playAgain: '다시 하기', score: (n, t) => n + ' / ' + t + ' 맞췄어요!' }},
-            ja: {{ title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese, reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), example: w => w.example_ja, audio: false, tts: 'ja-JP',
-                   game: '写真ゲーム', heading: '写真ゲーム · タップしよう', find: '探そう', miss: 'おしい', next: '次へ →', seeScore: 'スコア →', playAgain: 'もう一度', score: (n, t) => n + ' / ' + t + ' 正解！' }},
-            es: {{ title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish, reading: w => w.gender || '', example: w => w.example_es, audio: false, tts: 'es-ES',
-                   game: 'Juego de fotos', heading: 'Juego de fotos · toca el objeto', find: 'Busca', miss: 'casi', next: 'siguiente →', seeScore: 'ver puntaje →', playAgain: 'otra vez', score: (n, t) => '¡' + n + ' de ' + t + '!' }},
+            ko: {{ title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization,
+                   example: w => w.example_ko, audio: true, tts: 'ko-KR',
+                   heading: '사진 게임 · 눌러보세요', find: '찾기', miss: '아쉬워요',
+                   next: '다음 →', seeScore: '점수 보기 →', playAgain: '다시 하기',
+                   backGallery: '← 갤러리',
+                   score: (n, t) => n + ' / ' + t + ' 맞췄어요!' }},
+            ja: {{ title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese,
+                   reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '),
+                   example: w => w.example_ja, audio: false, tts: 'ja-JP',
+                   heading: '写真ゲーム · タップしよう', find: '探そう', miss: 'おしい',
+                   next: '次へ →', seeScore: 'スコア →', playAgain: 'もう一度',
+                   backGallery: '← ギャラリー',
+                   score: (n, t) => n + ' / ' + t + ' 正解！' }},
+            es: {{ title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish,
+                   reading: w => w.gender || '', example: w => w.example_es, audio: false, tts: 'es-ES',
+                   heading: 'Juego de fotos · toca el objeto', find: 'Busca', miss: 'casi',
+                   next: 'siguiente →', seeScore: 'ver puntaje →', playAgain: 'otra vez',
+                   backGallery: '← galería',
+                   score: (n, t) => '¡' + n + ' de ' + t + '!' }},
         }};
 
         function wordsFor(photo) {{ return photo[LANG[lang].words] || []; }}
 
-        // Build challenges from bbox data — language-independent (photo index + word index + hotspot boxes)
+        // Challenges are language-independent: photo index + word index + hotspot boxes
         function buildChallenges() {{
             const list = [];
             photos.forEach((photo, pIdx) => {{
@@ -250,12 +303,13 @@ def build_html(photos):
 
         let qChallenges = [], qIdx = 0, qScore = 0;
 
+        // ── Utilities ───────────────────────────────────────────────
+
         function speak(text, langCode) {{
             try {{
                 window.speechSynthesis.cancel();
                 const u = new SpeechSynthesisUtterance(text);
-                u.lang = langCode || 'ko-KR';
-                u.rate = 0.9;
+                u.lang = langCode || 'ko-KR'; u.rate = 0.9;
                 window.speechSynthesis.speak(u);
             }} catch (e) {{}}
         }}
@@ -288,30 +342,79 @@ def build_html(photos):
             document.getElementById('q-word').textContent = LANG[lang].front(w);
         }}
 
-        // ── Mode switching ──────────────────────────────────────────
-
-        function enterGame() {{
-            if (!hasQuiz) return;
-            gameMode = true;
-            document.getElementById('slides-container').style.display = 'none';
-            document.getElementById('nav-controls').style.display = 'none';
-            document.getElementById('game-panel').style.display = '';
-            document.getElementById('gameBtn').classList.add('active');
-            qStart();
+        function updateStreak(hit) {{
+            if (hit === null) {{ streak = 0; }}
+            else if (hit) {{ streak++; }}
+            else {{ streak = 0; }}
+            const el = document.getElementById('q-streak');
+            el.textContent = streak >= 2 ? '🔥 ' + streak : '';
         }}
 
-        function exitGame() {{
-            gameMode = false;
-            document.getElementById('game-panel').style.display = 'none';
-            document.getElementById('slides-container').style.display = '';
-            document.getElementById('nav-controls').style.display = '';
-            document.getElementById('gameBtn').classList.remove('active');
+        // ── Panel switching ─────────────────────────────────────────
+
+        function showPanel(which) {{
+            document.getElementById('slides-container').style.display = which === 'random' ? '' : 'none';
+            document.getElementById('nav-controls').style.display   = which === 'random' ? '' : 'none';
+            document.getElementById('gallery-panel').style.display  = which === 'gallery' ? '' : 'none';
+            document.getElementById('game-panel').style.display     = which === 'game'    ? '' : 'none';
+        }}
+
+        function setMode(newMode) {{
+            if (newMode === 'clicktarget' && !hasQuiz) return;
+            mode = newMode;
+            document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+            try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
+            if (mode === 'random') {{
+                showPanel('random');
+            }} else if (mode === 'gallery') {{
+                galleryPhotoIdx = -1;
+                showPanel('gallery');
+                renderGallery();
+            }} else if (mode === 'clicktarget') {{
+                showPanel('game');
+                document.getElementById('exitGameBtn').textContent = '← random';
+                document.getElementById('exitGameBtn').onclick = () => setMode('random');
+                streak = 0; updateStreak(null);
+                qStartAllPhotos();
+            }}
+        }}
+
+        // ── Gallery ─────────────────────────────────────────────────
+
+        function renderGallery() {{
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+            photos.forEach((photo, idx) => {{
+                const challenges = QUIZ.filter(ch => ch.photo === idx);
+                const div = document.createElement('div');
+                div.className = 'gallery-thumb' + (challenges.length === 0 ? ' no-game' : '');
+                div.innerHTML = `<img src="${{encodeURI(photo.local_image || '')}}" alt="${{photo.scene || ''}}" onerror="this.style.opacity=0.3">
+                    ${{challenges.length > 0 ? `<span class="thumb-badge">${{challenges.length}}</span>` : ''}}`;
+                if (challenges.length > 0) {{
+                    div.addEventListener('click', () => selectGalleryPhoto(idx));
+                }}
+                grid.appendChild(div);
+            }});
+        }}
+
+        function selectGalleryPhoto(pIdx) {{
+            galleryPhotoIdx = pIdx;
+            showPanel('game');
+            document.getElementById('exitGameBtn').textContent = '← gallery';
+            document.getElementById('exitGameBtn').onclick = returnToGallery;
+            streak = 0; updateStreak(null);
+            qStartSinglePhoto(pIdx);
+        }}
+
+        function returnToGallery() {{
+            galleryPhotoIdx = -1;
+            showPanel('gallery');
             try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
         }}
 
-        // ── Game logic ──────────────────────────────────────────────
+        // ── Game: start ─────────────────────────────────────────────
 
-        function qStart() {{
+        function qStartAllPhotos() {{
             qChallenges = qShuffle(QUIZ);
             qIdx = 0; qScore = 0;
             document.getElementById('q-score').style.display = 'none';
@@ -319,13 +422,25 @@ def build_html(photos):
             qLoad();
         }}
 
+        function qStartSinglePhoto(pIdx) {{
+            qChallenges = QUIZ.filter(ch => ch.photo === pIdx);
+            if (!qChallenges.length) {{ returnToGallery(); return; }}
+            qIdx = 0; qScore = 0;
+            document.getElementById('q-score').style.display = 'none';
+            document.getElementById('q-main').style.display = '';
+            qLoad();
+        }}
+
+        // ── Game: load & click ──────────────────────────────────────
+
         function qLoad() {{
             const ch = qChallenges[qIdx];
             if (!ch) return;
             document.getElementById('q-photo').src = encodeURI(photos[ch.photo].local_image || '');
             qRenderPrompt();
-            const fb = document.getElementById('q-feedback');
-            fb.textContent = ''; fb.style.color = '#7A7770';
+            document.getElementById('q-feedback').textContent = '';
+            document.getElementById('q-feedback').style.color = '#7A7770';
+            document.getElementById('q-english').textContent = '';
             document.getElementById('q-counter').textContent = (qIdx + 1) + ' / ' + qChallenges.length;
             const nxt = document.getElementById('q-next');
             nxt.style.display = 'none'; nxt.onclick = null;
@@ -338,34 +453,33 @@ def build_html(photos):
         function qClick(e) {{
             const ch = qChallenges[qIdx];
             const wrap = document.getElementById('q-wrap');
-            const img = document.getElementById('q-photo');
+            const img  = document.getElementById('q-photo');
             const rect = img.getBoundingClientRect();
-            const xPct = (e.clientX - rect.left) / rect.width * 100;
-            const yPct = (e.clientY - rect.top) / rect.height * 100;
-            const hit = ch.hotspot.some(hs => xPct >= hs.x1 && xPct <= hs.x2 && yPct >= hs.y1 && yPct <= hs.y2);
+            const xPct = (e.clientX - rect.left) / rect.width  * 100;
+            const yPct = (e.clientY - rect.top)  / rect.height * 100;
+            const hit  = ch.hotspot.some(hs => xPct >= hs.x1 && xPct <= hs.x2 && yPct >= hs.y1 && yPct <= hs.y2);
 
             wrap.onclick = null;
             wrap.style.cursor = 'default';
 
             const dot = document.createElement('div');
             dot.className = 'click-dot ' + (hit ? 'hit' : 'miss');
-            dot.style.left = xPct + '%';
-            dot.style.top = yPct + '%';
+            dot.style.left = xPct + '%'; dot.style.top = yPct + '%';
             wrap.appendChild(dot);
 
             ch.hotspot.forEach(hs => {{
                 const box = document.createElement('div');
                 box.className = 'hotspot-box';
-                box.style.left = hs.x1 + '%';
-                box.style.top = hs.y1 + '%';
-                box.style.width = (hs.x2 - hs.x1) + '%';
+                box.style.left   = hs.x1 + '%';  box.style.top    = hs.y1 + '%';
+                box.style.width  = (hs.x2 - hs.x1) + '%';
                 box.style.height = (hs.y2 - hs.y1) + '%';
                 wrap.appendChild(box);
                 requestAnimationFrame(() => box.classList.add('show'));
             }});
 
-            const fb = document.getElementById('q-feedback');
-            const w = qWord();
+            const w   = qWord();
+            const fb  = document.getElementById('q-feedback');
+            const eng = document.getElementById('q-english');
             if (hit) {{
                 qScore++;
                 fb.textContent = w ? '✓ ' + LANG[lang].front(w) : '✓';
@@ -375,6 +489,8 @@ def build_html(photos):
                 fb.textContent = '✗ ' + LANG[lang].miss;
                 fb.style.color = '#B85454';
             }}
+            eng.textContent = w ? w.english : '';
+            updateStreak(hit);
 
             const nxt = document.getElementById('q-next');
             nxt.style.display = 'inline-block';
@@ -391,7 +507,18 @@ def build_html(photos):
             document.getElementById('q-main').style.display = 'none';
             const scr = document.getElementById('q-score');
             scr.querySelector('.q-score-text').textContent = LANG[lang].score(qScore, qChallenges.length);
-            scr.querySelector('#q-replay').textContent = LANG[lang].playAgain;
+            const replayBtn  = document.getElementById('q-replay');
+            const galleryBtn = document.getElementById('q-back-gallery');
+            replayBtn.textContent = LANG[lang].playAgain;
+            if (mode === 'gallery') {{
+                replayBtn.onclick = () => qStartSinglePhoto(galleryPhotoIdx);
+                galleryBtn.textContent = LANG[lang].backGallery;
+                galleryBtn.style.display = 'inline-block';
+                galleryBtn.onclick = returnToGallery;
+            }} else {{
+                replayBtn.onclick = qStartAllPhotos;
+                galleryBtn.style.display = 'none';
+            }}
             scr.style.display = '';
         }}
 
@@ -402,22 +529,20 @@ def build_html(photos):
             container.innerHTML = '';
             document.getElementById('title').textContent = LANG[lang].title;
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-            document.getElementById('gameBtn').style.display = hasQuiz ? '' : 'none';
-            document.getElementById('gameBtnLabel').textContent = LANG[lang].game;
+            if (!hasQuiz) document.getElementById('tabClickTarget').disabled = true;
             photos.forEach((photo, idx) => {{
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
                 const photoUrl = encodeURI(photo.local_image || '');
                 const words = wordsFor(photo);
-                const html = `
+                slide.innerHTML = `
                     <div class="photo-container">
                         <img src="${{photoUrl}}" alt="${{photo.scene}}" class="photo" onerror="this.style.display='none'" />
                     </div>
                     <div class="vocab-cards">
                         ${{words.map((word, widx) => {{
                             const reading = LANG[lang].reading(word);
-                            return `
-                            <div class="card" data-word="${{widx}}">
+                            return `<div class="card" data-word="${{widx}}">
                                 <div class="word-front">${{LANG[lang].front(word)}}</div>
                                 <div class="reveal">
                                     ${{reading ? `<div class="romanization">${{reading}}</div>` : ''}}
@@ -427,9 +552,7 @@ def build_html(photos):
                                 </div>
                             </div>`;
                         }}).join('')}}
-                    </div>
-                `;
-                slide.innerHTML = html;
+                    </div>`;
                 container.appendChild(slide);
             }});
             document.getElementById('totalSlides').textContent = photos.length;
@@ -460,25 +583,27 @@ def build_html(photos):
             if (!LANG[next] || next === lang) return;
             lang = next;
             renderSlides();
-            if (gameMode) {{
-                qRenderPrompt();
-            }} else {{
+            if (mode === 'random') {{
                 showSlide(currentSlide);
+            }} else if (mode === 'clicktarget' || (mode === 'gallery' && galleryPhotoIdx >= 0)) {{
+                qRenderPrompt();
             }}
         }}
 
+        // ── Event listeners ─────────────────────────────────────────
+
+        document.querySelectorAll('.mode-tab').forEach(tab => {{
+            tab.addEventListener('click', () => setMode(tab.dataset.mode));
+        }});
         document.getElementById('prevBtn').addEventListener('click', () => showSlide(currentSlide - 1));
         document.getElementById('nextBtn').addEventListener('click', () => showSlide(currentSlide + 1));
         document.getElementById('langPicker').addEventListener('click', (e) => {{
             const btn = e.target.closest('.lang-btn');
             if (btn) setLang(btn.dataset.lang);
         }});
-        document.getElementById('gameBtn').addEventListener('click', enterGame);
-        document.getElementById('exitGameBtn').addEventListener('click', exitGame);
-        document.getElementById('q-replay').addEventListener('click', qStart);
         document.addEventListener('keydown', (e) => {{
-            if (gameMode) return;
-            if (e.key === 'ArrowLeft') showSlide(currentSlide - 1);
+            if (mode !== 'random') return;
+            if (e.key === 'ArrowLeft')  showSlide(currentSlide - 1);
             if (e.key === 'ArrowRight') showSlide(currentSlide + 1);
         }});
 

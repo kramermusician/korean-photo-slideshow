@@ -7,7 +7,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #f5ede4 0%, #e8ddd0 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .container { max-width: 900px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .container { max-width: 900px; width: 100%; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); overflow: hidden; }
+
+        /* ── Header ── */
         .header { background: linear-gradient(135deg, #8b7355 0%, #a89080 100%); color: white; padding: 24px; text-align: center; }
         .header .brand { font-size: 13px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.8; margin-bottom: 4px; }
         .header h1 { font-size: 22px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 16px; opacity: 0.92; }
@@ -16,19 +18,21 @@
         .lang-btn:hover { color: white; background: rgba(255,255,255,0.18); }
         .lang-btn.active { background: white; color: #8b7355; }
         .header-actions { margin-top: 14px; }
-        .game-btn { background: rgba(255,255,255,0.16); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
-        .game-btn:hover { background: white; color: #8b7355; }
-        .game-btn.active { background: white; color: #8b7355; }
+        .mode-tabs { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        .mode-tab { background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.4); padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .mode-tab:hover { background: rgba(255,255,255,0.28); color: white; }
+        .mode-tab.active { background: white; color: #8b7355; }
+        .mode-tab:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* ── Slideshow mode ── */
+        /* ── Random mode (slideshow) ── */
         .slide { display: none; padding: 40px; animation: fadeIn 0.3s ease; }
         .slide.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .photo-container { margin-bottom: 32px; text-align: center; }
-        .photo { max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+        .photo { max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .vocab-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 32px; }
         .card { background: #f9f8f6; border: 2px solid #e0d9d0; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; min-height: 140px; display: flex; flex-direction: column; justify-content: center; }
-        .card:hover { border-color: #8b7355; background: #fff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
+        .card:hover { border-color: #8b7355; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
         .card.flipped { background: #f0ebe5; border-color: #8b7355; }
         .word-front { font-size: 32px; font-weight: 600; color: #2c2c2c; margin-bottom: 8px; line-height: 1.2; }
         .card.flipped .word-front { display: none; }
@@ -47,12 +51,23 @@
         .counter { font-size: 14px; color: #8b7355; font-weight: 500; min-width: 60px; text-align: center; }
         .spacer { flex: 1; }
 
-        /* ── Game panel (separate mode, not a slide) ── */
+        /* ── Gallery mode ── */
+        #gallery-panel { display: none; padding: 32px 40px 40px; animation: fadeIn 0.3s ease; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .gallery-thumb { position: relative; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: all 0.18s ease; aspect-ratio: 4/3; background: #f0ebe5; }
+        .gallery-thumb:hover { border-color: #8b7355; box-shadow: 0 4px 14px rgba(0,0,0,0.18); transform: translateY(-2px); }
+        .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .thumb-badge { position: absolute; bottom: 5px; right: 5px; background: rgba(139,115,85,0.88); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; letter-spacing: 0.04em; }
+        .gallery-thumb.no-game { opacity: 0.45; cursor: default; }
+        .gallery-thumb.no-game:hover { border-color: transparent; box-shadow: none; transform: none; }
+
+        /* ── Game panel (Click Target + Gallery single-photo) ── */
         #game-panel { display: none; padding: 32px 40px 40px; animation: fadeIn 0.3s ease; }
-        .game-exit-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
-        .game-exit-btn { background: none; border: 1.5px solid #d4ccc0; color: #8b7355; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .game-exit-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .game-exit-btn { background: none; border: 1.5px solid #d4ccc0; color: #8b7355; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
         .game-exit-btn:hover { background: #f0ebe5; border-color: #8b7355; }
         .quiz-heading { font-size: 13px; letter-spacing: 0.13em; text-transform: uppercase; color: #8b7355; font-weight: 600; }
+        .streak-badge { font-size: 15px; font-weight: 700; color: #d4662a; margin-left: auto; letter-spacing: 0.02em; }
         .click-game { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
         .cg-prompt-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .cg-find { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #A09C95; }
@@ -66,12 +81,17 @@
         .click-dot.miss { background: #B85454; }
         .hotspot-box { position: absolute; border: 2.5px dashed #4A8C6A; border-radius: 6px; pointer-events: none; z-index: 9; opacity: 0; background: rgba(74,140,106,0.1); transition: opacity 0.3s ease; }
         .hotspot-box.show { opacity: 1; }
-        .cg-status-row { display: flex; align-items: center; gap: 16px; min-height: 38px; flex-wrap: wrap; justify-content: center; }
+        .cg-status-row { display: flex; align-items: center; gap: 12px; min-height: 48px; flex-wrap: wrap; justify-content: center; }
         .cg-counter { font-size: 12px; letter-spacing: 0.1em; color: #A09C95; text-transform: uppercase; min-width: 48px; }
-        .cg-feedback { font-size: 15px; font-style: italic; color: #7A7770; min-width: 180px; text-align: center; }
+        .cg-feedback-wrap { text-align: center; min-width: 160px; }
+        #q-feedback { font-size: 15px; font-style: italic; }
+        .cg-english { font-size: 13px; color: #8b7355; font-weight: 500; margin-top: 3px; }
         #q-next { display: none; }
-        .score-screen { text-align: center; padding: 20px; }
-        .q-score-text { font-size: 22px; color: #3D6B5E; font-weight: 600; margin-bottom: 18px; }
+        .score-screen { text-align: center; padding: 24px 20px; }
+        .q-score-text { font-size: 22px; color: #3D6B5E; font-weight: 600; margin-bottom: 20px; }
+        .score-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .secondary-btn { background: #f0ebe5; color: #8b7355; border: 1.5px solid #d4ccc0; }
+        .secondary-btn:hover { background: #e8ddd0; border-color: #8b7355; }
 
         @media (max-width: 600px) {
             .slide { padding: 24px; }
@@ -81,7 +101,9 @@
             .word-front { font-size: 28px; }
             .header h1 { font-size: 19px; }
             .lang-btn { padding: 6px 11px; font-size: 13px; }
-            #game-panel { padding: 24px; }
+            .mode-tab { padding: 6px 12px; font-size: 12px; }
+            #gallery-panel, #game-panel { padding: 20px; }
+            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
         }
     </style>
 </head>
@@ -96,11 +118,15 @@
                 <button class="lang-btn" data-lang="es">Español</button>
             </div>
             <div class="header-actions">
-                <button class="game-btn" id="gameBtn">🎯 <span id="gameBtnLabel"></span></button>
+                <div class="mode-tabs">
+                    <button class="mode-tab" data-mode="gallery">🖼 Gallery</button>
+                    <button class="mode-tab active" data-mode="random">🔀 Random</button>
+                    <button class="mode-tab" data-mode="clicktarget" id="tabClickTarget">🎯 Click Target</button>
+                </div>
             </div>
         </div>
 
-        <!-- Slideshow mode -->
+        <!-- Random mode -->
         <div class="slides-container" id="slides-container"></div>
         <div class="controls" id="nav-controls">
             <button class="nav-btn" id="prevBtn">← Previous</button>
@@ -110,11 +136,17 @@
             <button class="nav-btn" id="nextBtn">Next →</button>
         </div>
 
-        <!-- Game mode: separate panel, never part of the slide sequence -->
+        <!-- Gallery mode: photo grid -->
+        <div id="gallery-panel">
+            <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+
+        <!-- Game panel: shared by Click Target (all photos) and Gallery (single photo) -->
         <div id="game-panel">
             <div class="game-exit-bar">
-                <button class="game-exit-btn" id="exitGameBtn">← slides</button>
+                <button class="game-exit-btn" id="exitGameBtn">← back</button>
                 <span class="quiz-heading" id="q-heading"></span>
+                <span class="streak-badge" id="q-streak"></span>
             </div>
             <div id="q-main" class="click-game">
                 <div class="cg-prompt-row">
@@ -126,13 +158,19 @@
                 </div>
                 <div class="cg-status-row">
                     <span class="cg-counter" id="q-counter"></span>
-                    <span class="cg-feedback" id="q-feedback"></span>
+                    <div class="cg-feedback-wrap">
+                        <div id="q-feedback"></div>
+                        <div class="cg-english" id="q-english"></div>
+                    </div>
                     <button class="nav-btn" id="q-next">next →</button>
                 </div>
             </div>
             <div id="q-score" class="score-screen" style="display:none">
                 <div class="q-score-text"></div>
-                <button class="nav-btn" id="q-replay">play again</button>
+                <div class="score-actions">
+                    <button class="nav-btn" id="q-replay">play again</button>
+                    <button class="nav-btn secondary-btn" id="q-back-gallery" style="display:none">← gallery</button>
+                </div>
             </div>
         </div>
     </div>
@@ -141,20 +179,35 @@
         const photos = [{"photo": "Photo Jun 07 2026, 14 21 31.jpg", "stem": "Photo Jun 07 2026, 14 21 31", "scene": "A restaurant table with flatbread on a plate, three small bowls of dips on a wooden board, and a fork and knife on marble.", "bbox": [[{"x1": 0, "y1": 68, "x2": 48, "y2": 100}, {"x1": 24, "y1": 72, "x2": 52, "y2": 99}], [{"x1": 35, "y1": 24, "x2": 92, "y2": 47}, {"x1": 0, "y1": 62, "x2": 52, "y2": 100}], [{"x1": 36, "y1": 24, "x2": 54, "y2": 47}, {"x1": 54, "y1": 28, "x2": 71, "y2": 48}, {"x1": 74, "y1": 28, "x2": 93, "y2": 48}], null, null], "words": [{"hangul": "빵", "romanization": "ppang", "english": "bread", "pos": "noun", "example_ko": "이 빵 정말 맛있어요.", "example_en": "This bread is really delicious."}, {"hangul": "음식", "romanization": "eumsik", "english": "food", "pos": "noun", "example_ko": "음식이 너무 많아요.", "example_en": "There's so much food."}, {"hangul": "그릇", "romanization": "geureut", "english": "bowl", "pos": "noun", "example_ko": "그릇에 소스가 있어요.", "example_en": "There's sauce in the bowl."}, {"hangul": "먹다", "romanization": "meokda", "english": "to eat", "pos": "verb", "example_ko": "우리 같이 먹어요.", "example_en": "Let's eat together."}, {"hangul": "맛있다", "romanization": "masitda", "english": "to be delicious", "pos": "phrase", "example_ko": "이거 진짜 맛있어요.", "example_en": "This is really delicious."}], "words_ja": [{"japanese": "パン", "kana": "パン", "romaji": "pan", "english": "bread", "pos": "noun", "example_ja": "このパンは本当においしいです。", "example_en": "This bread is really delicious."}, {"japanese": "食べ物", "kana": "たべもの", "romaji": "tabemono", "english": "food", "pos": "noun", "example_ja": "食べ物がたくさんあります。", "example_en": "There's so much food."}, {"japanese": "器", "kana": "うつわ", "romaji": "utsuwa", "english": "bowl", "pos": "noun", "example_ja": "器にソースが入っています。", "example_en": "There's sauce in the bowl."}, {"japanese": "食べる", "kana": "たべる", "romaji": "taberu", "english": "to eat", "pos": "verb", "example_ja": "一緒に食べましょう。", "example_en": "Let's eat together."}, {"japanese": "おいしい", "kana": "おいしい", "romaji": "oishii", "english": "to be delicious", "pos": "phrase", "example_ja": "これは本当においしいです。", "example_en": "This is really delicious."}], "words_es": [{"spanish": "pan", "gender": "el", "english": "bread", "pos": "noun", "example_es": "Este pan está muy rico.", "example_en": "This bread is really delicious."}, {"spanish": "comida", "gender": "la", "english": "food", "pos": "noun", "example_es": "Hay mucha comida.", "example_en": "There's so much food."}, {"spanish": "tazón", "gender": "el", "english": "bowl", "pos": "noun", "example_es": "Hay salsa en el tazón.", "example_en": "There's sauce in the bowl."}, {"spanish": "comer", "gender": "", "english": "to eat", "pos": "verb", "example_es": "Vamos a comer juntos.", "example_en": "Let's eat together."}, {"spanish": "estar rico", "gender": "", "english": "to be delicious", "pos": "phrase", "example_es": "Esto está muy rico.", "example_en": "This is really delicious."}], "local_image": "photos/Photo-Jun-07-2026-14-21-31.jpg"}, {"photo": "Photo Jun 09 2026, 18 17 06.jpg", "stem": "Photo Jun 09 2026, 18 17 06", "scene": "A wide green grassy field under a clear blue sky, with a tall brick apartment building and other city buildings in the distance.", "bbox": [[{"x1": 0, "y1": 58, "x2": 100, "y2": 100}], [{"x1": 0, "y1": 0, "x2": 100, "y2": 40}], [{"x1": 36, "y1": 24, "x2": 58, "y2": 58}, {"x1": 18, "y1": 44, "x2": 36, "y2": 58}], [{"x1": 0, "y1": 56, "x2": 100, "y2": 100}], null], "words": [{"hangul": "잔디", "romanization": "jandi", "english": "grass, lawn", "pos": "noun", "example_ko": "잔디가 정말 푸르러요.", "example_en": "The grass is really green."}, {"hangul": "하늘", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "오늘 하늘이 맑아요.", "example_en": "The sky is clear today."}, {"hangul": "건물", "romanization": "geonmul", "english": "building", "pos": "noun", "example_ko": "저 건물이 아주 높아요.", "example_en": "That building is very tall."}, {"hangul": "공원", "romanization": "gongwon", "english": "park", "pos": "noun", "example_ko": "공원에서 산책해요.", "example_en": "I take a walk in the park."}, {"hangul": "걷다", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "저는 잔디 위를 걸어요.", "example_en": "I walk on the grass."}], "words_ja": [{"japanese": "芝生", "kana": "しばふ", "romaji": "shibafu", "english": "grass, lawn", "pos": "noun", "example_ja": "芝生がとても緑です。", "example_en": "The grass is really green."}, {"japanese": "空", "kana": "そら", "romaji": "sora", "english": "sky", "pos": "noun", "example_ja": "今日は空が晴れています。", "example_en": "The sky is clear today."}, {"japanese": "建物", "kana": "たてもの", "romaji": "tatemono", "english": "building", "pos": "noun", "example_ja": "あの建物はとても高いです。", "example_en": "That building is very tall."}, {"japanese": "公園", "kana": "こうえん", "romaji": "kōen", "english": "park", "pos": "noun", "example_ja": "公園を散歩します。", "example_en": "I take a walk in the park."}, {"japanese": "歩く", "kana": "あるく", "romaji": "aruku", "english": "to walk", "pos": "verb", "example_ja": "芝生の上を歩きます。", "example_en": "I walk on the grass."}], "words_es": [{"spanish": "césped", "gender": "el", "english": "grass, lawn", "pos": "noun", "example_es": "El césped está muy verde.", "example_en": "The grass is really green."}, {"spanish": "cielo", "gender": "el", "english": "sky", "pos": "noun", "example_es": "Hoy el cielo está despejado.", "example_en": "The sky is clear today."}, {"spanish": "edificio", "gender": "el", "english": "building", "pos": "noun", "example_es": "Ese edificio es muy alto.", "example_en": "That building is very tall."}, {"spanish": "parque", "gender": "el", "english": "park", "pos": "noun", "example_es": "Camino por el parque.", "example_en": "I take a walk in the park."}, {"spanish": "caminar", "gender": "", "english": "to walk", "pos": "verb", "example_es": "Camino sobre el césped.", "example_en": "I walk on the grass."}], "local_image": "photos/Photo-Jun-09-2026-18-17-06.jpg"}, {"photo": "Photo Jun 13 2026, 11 31 37.jpg", "stem": "Photo Jun 13 2026, 11 31 37", "scene": "A sunny tree-lined road with a stop sign, a parked car, and a bike path running alongside it.", "bbox": [[{"x1": 0, "y1": 55, "x2": 45, "y2": 100}, {"x1": 42, "y1": 58, "x2": 100, "y2": 85}], [{"x1": 54, "y1": 52, "x2": 76, "y2": 68}, {"x1": 40, "y1": 52, "x2": 56, "y2": 62}], [{"x1": 0, "y1": 8, "x2": 18, "y2": 58}, {"x1": 52, "y1": 8, "x2": 100, "y2": 58}], [{"x1": 0, "y1": 0, "x2": 100, "y2": 22}], null], "words": [{"hangul": "길", "romanization": "gil", "english": "road, path", "pos": "noun", "example_ko": "이 길은 아주 조용해요.", "example_en": "This road is very quiet."}, {"hangul": "차", "romanization": "cha", "english": "car", "pos": "noun", "example_ko": "길 옆에 차가 있어요.", "example_en": "There is a car next to the road."}, {"hangul": "나무", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "나무가 정말 많아요.", "example_en": "There are really a lot of trees."}, {"hangul": "하늘", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "오늘 하늘이 파래요.", "example_en": "The sky is blue today."}, {"hangul": "멈추다", "romanization": "meomchuda", "english": "to stop", "pos": "verb", "example_ko": "여기에서 차가 멈춰요.", "example_en": "The car stops here."}], "words_ja": [{"japanese": "道", "kana": "みち", "romaji": "michi", "english": "road, path", "pos": "noun", "example_ja": "この道はとても静かです。", "example_en": "This road is very quiet."}, {"japanese": "車", "kana": "くるま", "romaji": "kuruma", "english": "car", "pos": "noun", "example_ja": "道のそばに車があります。", "example_en": "There is a car next to the road."}, {"japanese": "木", "kana": "き", "romaji": "ki", "english": "tree", "pos": "noun", "example_ja": "木が本当にたくさんあります。", "example_en": "There are really a lot of trees."}, {"japanese": "空", "kana": "そら", "romaji": "sora", "english": "sky", "pos": "noun", "example_ja": "今日は空が青いです。", "example_en": "The sky is blue today."}, {"japanese": "止まる", "kana": "とまる", "romaji": "tomaru", "english": "to stop", "pos": "verb", "example_ja": "ここで車が止まります。", "example_en": "The car stops here."}], "words_es": [{"spanish": "camino", "gender": "el", "english": "road, path", "pos": "noun", "example_es": "Este camino es muy tranquilo.", "example_en": "This road is very quiet."}, {"spanish": "carro", "gender": "el", "english": "car", "pos": "noun", "example_es": "Hay un carro al lado del camino.", "example_en": "There is a car next to the road."}, {"spanish": "árbol", "gender": "el", "english": "tree", "pos": "noun", "example_es": "Hay muchos árboles.", "example_en": "There are really a lot of trees."}, {"spanish": "cielo", "gender": "el", "english": "sky", "pos": "noun", "example_es": "Hoy el cielo está azul.", "example_en": "The sky is blue today."}, {"spanish": "parar", "gender": "", "english": "to stop", "pos": "verb", "example_es": "El carro para aquí.", "example_en": "The car stops here."}], "local_image": "photos/Photo-Jun-13-2026-11-31-37.jpg"}, {"photo": "Photo Jun 19 2026, 10 05 46.jpg", "stem": "Photo Jun 19 2026, 10 05 46", "scene": "A Minecraft village with a fenced garden plot, trees, and wooden houses under a purple sky.", "bbox": [[{"x1": 40, "y1": 24, "x2": 60, "y2": 50}, {"x1": 76, "y1": 22, "x2": 98, "y2": 52}], [{"x1": 12, "y1": 30, "x2": 36, "y2": 50}, {"x1": 48, "y1": 40, "x2": 68, "y2": 52}], [{"x1": 34, "y1": 42, "x2": 68, "y2": 64}], null, [{"x1": 0, "y1": 0, "x2": 100, "y2": 20}]], "words": [{"hangul": "나무", "romanization": "namu", "english": "tree / wood", "pos": "noun", "example_ko": "저 나무는 정말 크네요.", "example_en": "That tree is really big."}, {"hangul": "집", "romanization": "jip", "english": "house", "pos": "noun", "example_ko": "저 집은 나무로 만들었어요.", "example_en": "That house is made of wood."}, {"hangul": "밭", "romanization": "bat", "english": "field / vegetable patch", "pos": "noun", "example_ko": "밭에서 채소를 키워요.", "example_en": "I grow vegetables in the field."}, {"hangul": "심다", "romanization": "simda", "english": "to plant", "pos": "verb", "example_ko": "씨앗을 밭에 심어요.", "example_en": "I plant seeds in the field."}, {"hangul": "하늘", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "하늘이 보라색이에요.", "example_en": "The sky is purple."}], "words_ja": [{"japanese": "木", "kana": "き", "romaji": "ki", "english": "tree / wood", "pos": "noun", "example_ja": "あの木は本当に大きいですね。", "example_en": "That tree is really big."}, {"japanese": "家", "kana": "いえ", "romaji": "ie", "english": "house", "pos": "noun", "example_ja": "あの家は木で作られています。", "example_en": "That house is made of wood."}, {"japanese": "畑", "kana": "はたけ", "romaji": "hatake", "english": "field / vegetable patch", "pos": "noun", "example_ja": "畑で野菜を育てます。", "example_en": "I grow vegetables in the field."}, {"japanese": "植える", "kana": "うえる", "romaji": "ueru", "english": "to plant", "pos": "verb", "example_ja": "畑に種を植えます。", "example_en": "I plant seeds in the field."}, {"japanese": "空", "kana": "そら", "romaji": "sora", "english": "sky", "pos": "noun", "example_ja": "空が紫色です。", "example_en": "The sky is purple."}], "words_es": [{"spanish": "árbol", "gender": "el", "english": "tree / wood", "pos": "noun", "example_es": "Ese árbol es muy grande.", "example_en": "That tree is really big."}, {"spanish": "casa", "gender": "la", "english": "house", "pos": "noun", "example_es": "Esa casa es de madera.", "example_en": "That house is made of wood."}, {"spanish": "huerto", "gender": "el", "english": "field / vegetable patch", "pos": "noun", "example_es": "Cultivo verduras en el huerto.", "example_en": "I grow vegetables in the field."}, {"spanish": "plantar", "gender": "", "english": "to plant", "pos": "verb", "example_es": "Planto semillas en el huerto.", "example_en": "I plant seeds in the field."}, {"spanish": "cielo", "gender": "el", "english": "sky", "pos": "noun", "example_es": "El cielo es morado.", "example_en": "The sky is purple."}], "local_image": "photos/Photo-Jun-19-2026-10-05-46.jpg"}, {"photo": "Photo Jun 21 2026, 17 23 33.jpg", "stem": "Photo Jun 21 2026, 17 23 33", "scene": "A smiling woman in a white t-shirt and blue floral skirt stands on a sidewalk in front of a house with a small garden and porch chairs.", "bbox": [[{"x1": 18, "y1": 0, "x2": 78, "y2": 48}, {"x1": 58, "y1": 18, "x2": 82, "y2": 42}], [{"x1": 26, "y1": 62, "x2": 52, "y2": 100}], [{"x1": 52, "y1": 40, "x2": 86, "y2": 78}], null, [{"x1": 84, "y1": 42, "x2": 100, "y2": 70}]], "words": [{"hangul": "집", "romanization": "jip", "english": "house / home", "pos": "noun", "example_ko": "저 집이 예뻐요.", "example_en": "That house is pretty."}, {"hangul": "치마", "romanization": "chima", "english": "skirt", "pos": "noun", "example_ko": "치마가 정말 예뻐요.", "example_en": "The skirt is really pretty."}, {"hangul": "정원", "romanization": "jeonwon", "english": "garden / yard", "pos": "noun", "example_ko": "정원에 꽃이 있어요.", "example_en": "There are flowers in the garden."}, {"hangul": "웃다", "romanization": "utda", "english": "to smile / to laugh", "pos": "verb", "example_ko": "왜 웃어요?", "example_en": "Why are you smiling?"}, {"hangul": "길", "romanization": "gil", "english": "street / road / path", "pos": "noun", "example_ko": "길에서 사진을 찍었어요.", "example_en": "I took a photo on the street."}], "words_ja": [{"japanese": "家", "kana": "いえ", "romaji": "ie", "english": "house / home", "pos": "noun", "example_ja": "あの家はきれいです。", "example_en": "That house is pretty."}, {"japanese": "スカート", "kana": "スカート", "romaji": "sukāto", "english": "skirt", "pos": "noun", "example_ja": "スカートが本当にかわいいです。", "example_en": "The skirt is really pretty."}, {"japanese": "庭", "kana": "にわ", "romaji": "niwa", "english": "garden / yard", "pos": "noun", "example_ja": "庭に花があります。", "example_en": "There are flowers in the garden."}, {"japanese": "笑う", "kana": "わらう", "romaji": "warau", "english": "to smile / to laugh", "pos": "verb", "example_ja": "どうして笑っているんですか？", "example_en": "Why are you smiling?"}, {"japanese": "道", "kana": "みち", "romaji": "michi", "english": "street / road / path", "pos": "noun", "example_ja": "道で写真を撮りました。", "example_en": "I took a photo on the street."}], "words_es": [{"spanish": "casa", "gender": "la", "english": "house / home", "pos": "noun", "example_es": "Esa casa es bonita.", "example_en": "That house is pretty."}, {"spanish": "falda", "gender": "la", "english": "skirt", "pos": "noun", "example_es": "La falda es muy bonita.", "example_en": "The skirt is really pretty."}, {"spanish": "jardín", "gender": "el", "english": "garden / yard", "pos": "noun", "example_es": "Hay flores en el jardín.", "example_en": "There are flowers in the garden."}, {"spanish": "sonreír", "gender": "", "english": "to smile / to laugh", "pos": "verb", "example_es": "¿Por qué sonríes?", "example_en": "Why are you smiling?"}, {"spanish": "calle", "gender": "la", "english": "street / road / path", "pos": "noun", "example_es": "Tomé una foto en la calle.", "example_en": "I took a photo on the street."}], "local_image": "photos/Photo-Jun-21-2026-17-23-33.jpg"}, {"photo": "Photo Jun 21 2026, 21 35 59.jpg", "stem": "Photo Jun 21 2026, 21 35 59", "scene": "A large, colorful floral painting in a white frame hangs on a gray wall.", "bbox": [[{"x1": 4, "y1": 8, "x2": 96, "y2": 92}], [{"x1": 24, "y1": 18, "x2": 76, "y2": 80}], [{"x1": 0, "y1": 0, "x2": 100, "y2": 100}], [{"x1": 2, "y1": 4, "x2": 98, "y2": 96}], null], "words": [{"hangul": "그림", "romanization": "geurim", "english": "painting / picture", "pos": "noun", "example_ko": "저 그림이 정말 예뻐요.", "example_en": "That painting is really pretty."}, {"hangul": "꽃", "romanization": "kkot", "english": "flower", "pos": "noun", "example_ko": "그림에 꽃이 많아요.", "example_en": "There are a lot of flowers in the painting."}, {"hangul": "벽", "romanization": "byeok", "english": "wall", "pos": "noun", "example_ko": "벽이 회색이에요.", "example_en": "The wall is gray."}, {"hangul": "액자", "romanization": "aekja", "english": "picture frame", "pos": "noun", "example_ko": "액자가 하얀색이에요.", "example_en": "The picture frame is white."}, {"hangul": "걸다", "romanization": "geolda", "english": "to hang (something)", "pos": "verb", "example_ko": "그림을 벽에 걸었어요.", "example_en": "I hung the painting on the wall."}], "words_ja": [{"japanese": "絵", "kana": "え", "romaji": "e", "english": "painting / picture", "pos": "noun", "example_ja": "あの絵は本当にきれいです。", "example_en": "That painting is really pretty."}, {"japanese": "花", "kana": "はな", "romaji": "hana", "english": "flower", "pos": "noun", "example_ja": "絵に花がたくさんあります。", "example_en": "There are a lot of flowers in the painting."}, {"japanese": "壁", "kana": "かべ", "romaji": "kabe", "english": "wall", "pos": "noun", "example_ja": "壁が灰色です。", "example_en": "The wall is gray."}, {"japanese": "額縁", "kana": "がくぶち", "romaji": "gakubuchi", "english": "picture frame", "pos": "noun", "example_ja": "額縁が白いです。", "example_en": "The picture frame is white."}, {"japanese": "掛ける", "kana": "かける", "romaji": "kakeru", "english": "to hang (something)", "pos": "verb", "example_ja": "絵を壁に掛けました。", "example_en": "I hung the painting on the wall."}], "words_es": [{"spanish": "cuadro", "gender": "el", "english": "painting / picture", "pos": "noun", "example_es": "Ese cuadro es muy bonito.", "example_en": "That painting is really pretty."}, {"spanish": "flor", "gender": "la", "english": "flower", "pos": "noun", "example_es": "Hay muchas flores en el cuadro.", "example_en": "There are a lot of flowers in the painting."}, {"spanish": "pared", "gender": "la", "english": "wall", "pos": "noun", "example_es": "La pared es gris.", "example_en": "The wall is gray."}, {"spanish": "marco", "gender": "el", "english": "picture frame", "pos": "noun", "example_es": "El marco es blanco.", "example_en": "The picture frame is white."}, {"spanish": "colgar", "gender": "", "english": "to hang (something)", "pos": "verb", "example_es": "Colgué el cuadro en la pared.", "example_en": "I hung the painting on the wall."}], "local_image": "photos/Photo-Jun-21-2026-21-35-59.jpg"}, {"photo": "Photo Jun 22 2026, 10 10 34.jpg", "stem": "Photo Jun 22 2026, 10 10 34", "scene": "A group of Canada geese and a white goose walking along a paved path next to a grassy lawn, photographed from above.", "bbox": [[{"x1": 28, "y1": 24, "x2": 52, "y2": 62}, {"x1": 48, "y1": 30, "x2": 78, "y2": 68}], [{"x1": 18, "y1": 58, "x2": 40, "y2": 78}], [{"x1": 0, "y1": 0, "x2": 100, "y2": 60}], [{"x1": 0, "y1": 58, "x2": 100, "y2": 80}], null], "words": [{"hangul": "새", "romanization": "sae", "english": "bird", "pos": "noun", "example_ko": "새가 많이 있어요.", "example_en": "There are a lot of birds."}, {"hangul": "거위", "romanization": "geowi", "english": "goose", "pos": "noun", "example_ko": "저 거위는 하얀색이에요.", "example_en": "That goose is white."}, {"hangul": "길", "romanization": "gil", "english": "path / road", "pos": "noun", "example_ko": "거위들이 길에 있어요.", "example_en": "The geese are on the path."}, {"hangul": "잔디", "romanization": "jandi", "english": "grass / lawn", "pos": "noun", "example_ko": "잔디가 초록색이에요.", "example_en": "The grass is green."}, {"hangul": "걷다", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "거위들이 천천히 걷고 있어요.", "example_en": "The geese are walking slowly."}], "words_ja": [{"japanese": "鳥", "kana": "とり", "romaji": "tori", "english": "bird", "pos": "noun", "example_ja": "鳥がたくさんいます。", "example_en": "There are a lot of birds."}, {"japanese": "ガチョウ", "kana": "ガチョウ", "romaji": "gachō", "english": "goose", "pos": "noun", "example_ja": "あのガチョウは白いです。", "example_en": "That goose is white."}, {"japanese": "道", "kana": "みち", "romaji": "michi", "english": "path / road", "pos": "noun", "example_ja": "ガチョウが道にいます。", "example_en": "The geese are on the path."}, {"japanese": "芝生", "kana": "しばふ", "romaji": "shibafu", "english": "grass / lawn", "pos": "noun", "example_ja": "芝生が緑です。", "example_en": "The grass is green."}, {"japanese": "歩く", "kana": "あるく", "romaji": "aruku", "english": "to walk", "pos": "verb", "example_ja": "ガチョウがゆっくり歩いています。", "example_en": "The geese are walking slowly."}], "words_es": [{"spanish": "pájaro", "gender": "el", "english": "bird", "pos": "noun", "example_es": "Hay muchos pájaros.", "example_en": "There are a lot of birds."}, {"spanish": "ganso", "gender": "el", "english": "goose", "pos": "noun", "example_es": "Ese ganso es blanco.", "example_en": "That goose is white."}, {"spanish": "camino", "gender": "el", "english": "path / road", "pos": "noun", "example_es": "Los gansos están en el camino.", "example_en": "The geese are on the path."}, {"spanish": "césped", "gender": "el", "english": "grass / lawn", "pos": "noun", "example_es": "El césped es verde.", "example_en": "The grass is green."}, {"spanish": "caminar", "gender": "", "english": "to walk", "pos": "verb", "example_es": "Los gansos caminan despacio.", "example_en": "The geese are walking slowly."}], "local_image": "photos/Photo-Jun-22-2026-10-10-34.jpg"}, {"photo": "Photo Jun 22 2026, 10 12 48.jpg", "stem": "Photo Jun 22 2026, 10 12 48", "scene": "A small gray bird is perched on thin tree branches with lush green foliage in the background.", "bbox": [[{"x1": 44, "y1": 46, "x2": 86, "y2": 78}], [{"x1": 0, "y1": 0, "x2": 100, "y2": 100}], [{"x1": 34, "y1": 4, "x2": 72, "y2": 96}], null, [{"x1": 0, "y1": 0, "x2": 40, "y2": 50}, {"x1": 60, "y1": 10, "x2": 100, "y2": 60}]], "words": [{"hangul": "새", "romanization": "sae", "english": "bird", "pos": "noun", "example_ko": "새가 나뭇가지에 앉아 있어요.", "example_en": "A bird is sitting on a branch."}, {"hangul": "나무", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "저 나무가 정말 예뻐요.", "example_en": "That tree is really pretty."}, {"hangul": "나뭇가지", "romanization": "namutgaji", "english": "branch", "pos": "noun", "example_ko": "나뭇가지가 가늘어요.", "example_en": "The branch is thin."}, {"hangul": "앉다", "romanization": "anda", "english": "to sit / to perch", "pos": "verb", "example_ko": "여기 앉으세요.", "example_en": "Please sit here."}, {"hangul": "나뭇잎", "romanization": "namunnip", "english": "leaf", "pos": "noun", "example_ko": "나뭇잎이 초록색이에요.", "example_en": "The leaves are green."}], "words_ja": [{"japanese": "鳥", "kana": "とり", "romaji": "tori", "english": "bird", "pos": "noun", "example_ja": "鳥が枝に止まっています。", "example_en": "A bird is sitting on a branch."}, {"japanese": "木", "kana": "き", "romaji": "ki", "english": "tree", "pos": "noun", "example_ja": "あの木は本当にきれいです。", "example_en": "That tree is really pretty."}, {"japanese": "枝", "kana": "えだ", "romaji": "eda", "english": "branch", "pos": "noun", "example_ja": "枝が細いです。", "example_en": "The branch is thin."}, {"japanese": "座る", "kana": "すわる", "romaji": "suwaru", "english": "to sit / to perch", "pos": "verb", "example_ja": "ここに座ってください。", "example_en": "Please sit here."}, {"japanese": "葉っぱ", "kana": "はっぱ", "romaji": "happa", "english": "leaf", "pos": "noun", "example_ja": "葉っぱが緑です。", "example_en": "The leaves are green."}], "words_es": [{"spanish": "pájaro", "gender": "el", "english": "bird", "pos": "noun", "example_es": "El pájaro está en la rama.", "example_en": "A bird is sitting on a branch."}, {"spanish": "árbol", "gender": "el", "english": "tree", "pos": "noun", "example_es": "Ese árbol es muy bonito.", "example_en": "That tree is really pretty."}, {"spanish": "rama", "gender": "la", "english": "branch", "pos": "noun", "example_es": "La rama es delgada.", "example_en": "The branch is thin."}, {"spanish": "sentarse", "gender": "", "english": "to sit / to perch", "pos": "verb", "example_es": "Siéntate aquí, por favor.", "example_en": "Please sit here."}, {"spanish": "hoja", "gender": "la", "english": "leaf", "pos": "noun", "example_es": "Las hojas son verdes.", "example_en": "The leaves are green."}], "local_image": "photos/Photo-Jun-22-2026-10-12-48.jpg"}, {"photo": "Photo Jun 22 2026, 11 24 36.jpg", "stem": "Photo Jun 22 2026, 11 24 36", "scene": "A person in a striped shirt takes an outdoor selfie in a park, with leafy green trees, a grass lawn, and an overcast sky in the background.", "bbox": [[{"x1": 0, "y1": 0, "x2": 52, "y2": 100}], [{"x1": 0, "y1": 68, "x2": 40, "y2": 100}], [{"x1": 40, "y1": 68, "x2": 100, "y2": 100}], [{"x1": 0, "y1": 0, "x2": 100, "y2": 100}], null], "words": [{"hangul": "나무", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "저 나무가 정말 커요.", "example_en": "That tree is really big."}, {"hangul": "하늘", "romanization": "haneul", "english": "sky", "pos": "noun", "example_ko": "오늘 하늘이 흐려요.", "example_en": "The sky is cloudy today."}, {"hangul": "잔디", "romanization": "jandi", "english": "grass, lawn", "pos": "noun", "example_ko": "잔디가 정말 초록색이에요.", "example_en": "The grass is really green."}, {"hangul": "공원", "romanization": "gongwon", "english": "park", "pos": "noun", "example_ko": "저는 공원에 자주 가요.", "example_en": "I go to the park often."}, {"hangul": "산책하다", "romanization": "sanchaek-ada", "english": "to take a walk", "pos": "verb", "example_ko": "공원에서 산책해요.", "example_en": "I take a walk in the park."}], "words_ja": [{"japanese": "木", "kana": "き", "romaji": "ki", "english": "tree", "pos": "noun", "example_ja": "あの木は本当に大きいです。", "example_en": "That tree is really big."}, {"japanese": "空", "kana": "そら", "romaji": "sora", "english": "sky", "pos": "noun", "example_ja": "今日は空が曇っています。", "example_en": "The sky is cloudy today."}, {"japanese": "芝生", "kana": "しばふ", "romaji": "shibafu", "english": "grass, lawn", "pos": "noun", "example_ja": "芝生が本当に緑です。", "example_en": "The grass is really green."}, {"japanese": "公園", "kana": "こうえん", "romaji": "kōen", "english": "park", "pos": "noun", "example_ja": "私はよく公園に行きます。", "example_en": "I go to the park often."}, {"japanese": "散歩する", "kana": "さんぽする", "romaji": "sanpo suru", "english": "to take a walk", "pos": "verb", "example_ja": "公園で散歩します。", "example_en": "I take a walk in the park."}], "words_es": [{"spanish": "árbol", "gender": "el", "english": "tree", "pos": "noun", "example_es": "Ese árbol es muy grande.", "example_en": "That tree is really big."}, {"spanish": "cielo", "gender": "el", "english": "sky", "pos": "noun", "example_es": "Hoy el cielo está nublado.", "example_en": "The sky is cloudy today."}, {"spanish": "césped", "gender": "el", "english": "grass, lawn", "pos": "noun", "example_es": "El césped está muy verde.", "example_en": "The grass is really green."}, {"spanish": "parque", "gender": "el", "english": "park", "pos": "noun", "example_es": "Voy al parque seguido.", "example_en": "I go to the park often."}, {"spanish": "pasear", "gender": "", "english": "to take a walk", "pos": "verb", "example_es": "Paseo por el parque.", "example_en": "I take a walk in the park."}], "local_image": "photos/Photo-Jun-22-2026-11-24-36.jpg"}, {"photo": "Photo Jun 22 2026, 11 30 08.jpg", "stem": "Photo Jun 22 2026, 11 30 08", "scene": "A street passes under a bridge overpass, with murals painted on the concrete wall, a pickup truck driving through, and a sidewalk along the right side.", "bbox": [[{"x1": 0, "y1": 0, "x2": 62, "y2": 42}], [{"x1": 0, "y1": 54, "x2": 42, "y2": 86}], [{"x1": 56, "y1": 68, "x2": 100, "y2": 100}], [{"x1": 62, "y1": 20, "x2": 100, "y2": 80}], null], "words": [{"hangul": "다리", "romanization": "dari", "english": "bridge", "pos": "noun", "example_ko": "저 다리 밑으로 지나가요.", "example_en": "I go under that bridge."}, {"hangul": "트럭", "romanization": "teureok", "english": "truck", "pos": "noun", "example_ko": "트럭이 빠르게 지나가요.", "example_en": "The truck passes by quickly."}, {"hangul": "인도", "romanization": "indo", "english": "sidewalk", "pos": "noun", "example_ko": "인도에서 걸어요.", "example_en": "I walk on the sidewalk."}, {"hangul": "벽화", "romanization": "byeokhwa", "english": "mural / wall painting", "pos": "noun", "example_ko": "벽화가 정말 예뻐요.", "example_en": "The mural is really pretty."}, {"hangul": "지나가다", "romanization": "jinagada", "english": "to pass by / go through", "pos": "verb", "example_ko": "차가 터널 밑으로 지나가요.", "example_en": "The car passes under the tunnel."}], "words_ja": [{"japanese": "橋", "kana": "はし", "romaji": "hashi", "english": "bridge", "pos": "noun", "example_ja": "あの橋の下を通ります。", "example_en": "I go under that bridge."}, {"japanese": "トラック", "kana": "トラック", "romaji": "torakku", "english": "truck", "pos": "noun", "example_ja": "トラックが速く通ります。", "example_en": "The truck passes by quickly."}, {"japanese": "歩道", "kana": "ほどう", "romaji": "hodō", "english": "sidewalk", "pos": "noun", "example_ja": "歩道を歩きます。", "example_en": "I walk on the sidewalk."}, {"japanese": "壁画", "kana": "へきが", "romaji": "hekiga", "english": "mural / wall painting", "pos": "noun", "example_ja": "壁画が本当にきれいです。", "example_en": "The mural is really pretty."}, {"japanese": "通る", "kana": "とおる", "romaji": "tōru", "english": "to pass by / go through", "pos": "verb", "example_ja": "車がトンネルの下を通ります。", "example_en": "The car passes under the tunnel."}], "words_es": [{"spanish": "puente", "gender": "el", "english": "bridge", "pos": "noun", "example_es": "Paso por debajo de ese puente.", "example_en": "I go under that bridge."}, {"spanish": "camión", "gender": "el", "english": "truck", "pos": "noun", "example_es": "El camión pasa rápido.", "example_en": "The truck passes by quickly."}, {"spanish": "acera", "gender": "la", "english": "sidewalk", "pos": "noun", "example_es": "Camino por la acera.", "example_en": "I walk on the sidewalk."}, {"spanish": "mural", "gender": "el", "english": "mural / wall painting", "pos": "noun", "example_es": "El mural es muy bonito.", "example_en": "The mural is really pretty."}, {"spanish": "pasar", "gender": "", "english": "to pass by / go through", "pos": "verb", "example_es": "El carro pasa por debajo del túnel.", "example_en": "The car passes under the tunnel."}], "local_image": "photos/Photo-Jun-22-2026-11-30-08.jpg"}, {"photo": "Photo Jun 23 2026, 10 59 18.jpg", "stem": "Photo Jun 23 2026, 10 59 18", "scene": "A cluttered classroom desk with an open laptop, stacked folders and binders, a spiral notebook, and a hand-written Chinese sign on the wall.", "bbox": [[{"x1": 38, "y1": 47, "x2": 68, "y2": 83}], [{"x1": 0, "y1": 52, "x2": 100, "y2": 100}], [{"x1": 65, "y1": 60, "x2": 92, "y2": 90}], [{"x1": 5, "y1": 50, "x2": 38, "y2": 85}], null], "words": [{"hangul": "노트북", "romanization": "noteubok", "english": "laptop", "pos": "noun", "example_ko": "노트북이 책상 위에 있어요.", "example_en": "The laptop is on the desk."}, {"hangul": "책상", "romanization": "chaeksang", "english": "desk", "pos": "noun", "example_ko": "책상이 정말 바빠 보여요.", "example_en": "The desk looks really busy."}, {"hangul": "공책", "romanization": "gongchaek", "english": "notebook", "pos": "noun", "example_ko": "공책에 메모를 써요.", "example_en": "I write notes in my notebook."}, {"hangul": "폴더", "romanization": "poldeo", "english": "folder", "pos": "noun", "example_ko": "폴더 안에 서류가 많아요.", "example_en": "There are a lot of papers in the folder."}, {"hangul": "공부하다", "romanization": "gongbu-hada", "english": "to study", "pos": "verb", "example_ko": "지금 공부하고 있어요.", "example_en": "I am studying right now."}], "words_ja": [{"japanese": "ノートパソコン", "kana": "ノートパソコン", "romaji": "nōto pasokon", "english": "laptop", "pos": "noun", "example_ja": "ノートパソコンが机の上にあります。", "example_en": "The laptop is on the desk."}, {"japanese": "机", "kana": "つくえ", "romaji": "tsukue", "english": "desk", "pos": "noun", "example_ja": "机の上がとても散らかっています。", "example_en": "The desk is very cluttered."}, {"japanese": "ノート", "kana": "ノート", "romaji": "nōto", "english": "notebook", "pos": "noun", "example_ja": "ノートにメモを書きます。", "example_en": "I write notes in my notebook."}, {"japanese": "フォルダー", "kana": "フォルダー", "romaji": "foruda", "english": "folder", "pos": "noun", "example_ja": "フォルダーの中に書類がたくさんあります。", "example_en": "There are a lot of papers in the folder."}, {"japanese": "勉強する", "kana": "べんきょうする", "romaji": "benkyō suru", "english": "to study", "pos": "verb", "example_ja": "今、勉強しています。", "example_en": "I am studying right now."}], "words_es": [{"spanish": "laptop", "gender": "la", "english": "laptop", "pos": "noun", "example_es": "La laptop está sobre el escritorio.", "example_en": "The laptop is on the desk."}, {"spanish": "escritorio", "gender": "el", "english": "desk", "pos": "noun", "example_es": "El escritorio está muy ocupado hoy.", "example_en": "The desk is very busy today."}, {"spanish": "cuaderno", "gender": "el", "english": "notebook", "pos": "noun", "example_es": "Escribo notas en el cuaderno.", "example_en": "I write notes in my notebook."}, {"spanish": "carpeta", "gender": "la", "english": "folder", "pos": "noun", "example_es": "Hay muchos papeles dentro de la carpeta.", "example_en": "There are a lot of papers inside the folder."}, {"spanish": "estudiar", "gender": "", "english": "to study", "pos": "verb", "example_es": "Ahora estoy estudiando.", "example_en": "I am studying right now."}], "local_image": "photos/Photo-Jun-23-2026-10-59-18.jpg"}, {"photo": "Photo Jun 23 2026, 14 02 10.jpg", "stem": "Photo Jun 23 2026, 14 02 10", "scene": "A bumblebee feeds at the center of a bright pink rose surrounded by green leaves.", "bbox": [[{"x1": 18, "y1": 12, "x2": 92, "y2": 96}], [{"x1": 42, "y1": 56, "x2": 72, "y2": 82}], [{"x1": 0, "y1": 0, "x2": 34, "y2": 100}, {"x1": 62, "y1": 0, "x2": 100, "y2": 100}], [{"x1": 18, "y1": 12, "x2": 92, "y2": 96}], null], "words": [{"hangul": "꽃", "romanization": "kkot", "english": "flower", "pos": "noun", "example_ko": "이 꽃이 정말 예뻐요.", "example_en": "This flower is really pretty."}, {"hangul": "벌", "romanization": "beol", "english": "bee", "pos": "noun", "example_ko": "벌이 꽃에 앉았어요.", "example_en": "A bee landed on the flower."}, {"hangul": "잎", "romanization": "ip", "english": "leaf", "pos": "noun", "example_ko": "잎이 아주 초록색이에요.", "example_en": "The leaves are very green."}, {"hangul": "분홍색", "romanization": "bunhongsaek", "english": "pink", "pos": "noun", "example_ko": "이 꽃은 분홍색이에요.", "example_en": "This flower is pink."}, {"hangul": "날다", "romanization": "nalda", "english": "to fly", "pos": "verb", "example_ko": "벌이 꽃 위로 날아요.", "example_en": "The bee flies over the flower."}], "words_ja": [{"japanese": "花", "kana": "はな", "romaji": "hana", "english": "flower", "pos": "noun", "example_ja": "この花は本当にきれいです。", "example_en": "This flower is really pretty."}, {"japanese": "蜂", "kana": "はち", "romaji": "hachi", "english": "bee", "pos": "noun", "example_ja": "蜂が花にとまりました。", "example_en": "A bee landed on the flower."}, {"japanese": "葉っぱ", "kana": "はっぱ", "romaji": "happa", "english": "leaf", "pos": "noun", "example_ja": "葉っぱがとても緑です。", "example_en": "The leaves are very green."}, {"japanese": "ピンク", "kana": "ピンク", "romaji": "pinku", "english": "pink", "pos": "noun", "example_ja": "この花はピンクです。", "example_en": "This flower is pink."}, {"japanese": "飛ぶ", "kana": "とぶ", "romaji": "tobu", "english": "to fly", "pos": "verb", "example_ja": "蜂が花の上を飛びます。", "example_en": "The bee flies over the flower."}], "words_es": [{"spanish": "flor", "gender": "la", "english": "flower", "pos": "noun", "example_es": "Esta flor es muy bonita.", "example_en": "This flower is really pretty."}, {"spanish": "abeja", "gender": "la", "english": "bee", "pos": "noun", "example_es": "Una abeja se posó en la flor.", "example_en": "A bee landed on the flower."}, {"spanish": "hoja", "gender": "la", "english": "leaf", "pos": "noun", "example_es": "Las hojas son muy verdes.", "example_en": "The leaves are very green."}, {"spanish": "rosa", "gender": "", "english": "pink", "pos": "noun", "example_es": "Esta flor es rosa.", "example_en": "This flower is pink."}, {"spanish": "volar", "gender": "", "english": "to fly", "pos": "verb", "example_es": "La abeja vuela sobre la flor.", "example_en": "The bee flies over the flower."}], "local_image": "photos/Photo-Jun-23-2026-14-02-10.jpg"}, {"photo": "Photo Jun 23 2026, 14 04 19.jpg", "stem": "Photo Jun 23 2026, 14 04 19", "scene": "An outstretched hand on a sidewalk, wearing a piano-keyboard ring and a smartwatch, with the feet and shoes visible below.", "bbox": [[{"x1": 8, "y1": 0, "x2": 72, "y2": 68}], [{"x1": 24, "y1": 18, "x2": 40, "y2": 42}], [{"x1": 52, "y1": 68, "x2": 86, "y2": 100}], [{"x1": 74, "y1": 30, "x2": 100, "y2": 62}], null], "words": [{"hangul": "손", "romanization": "son", "english": "hand", "pos": "noun", "example_ko": "손이 정말 커요.", "example_en": "Your hand is really big."}, {"hangul": "반지", "romanization": "banji", "english": "ring", "pos": "noun", "example_ko": "이 반지가 마음에 들어요.", "example_en": "I like this ring."}, {"hangul": "시계", "romanization": "sigye", "english": "watch", "pos": "noun", "example_ko": "시계로 시간을 봐요.", "example_en": "I check the time with my watch."}, {"hangul": "신발", "romanization": "sinbal", "english": "shoes", "pos": "noun", "example_ko": "새 신발을 샀어요.", "example_en": "I bought new shoes."}, {"hangul": "걷다", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "매일 공원에서 걸어요.", "example_en": "I walk in the park every day."}], "words_ja": [{"japanese": "手", "kana": "て", "romaji": "te", "english": "hand", "pos": "noun", "example_ja": "手が本当に大きいです。", "example_en": "Your hand is really big."}, {"japanese": "指輪", "kana": "ゆびわ", "romaji": "yubiwa", "english": "ring", "pos": "noun", "example_ja": "この指輪が気に入っています。", "example_en": "I like this ring."}, {"japanese": "時計", "kana": "とけい", "romaji": "tokei", "english": "watch", "pos": "noun", "example_ja": "時計で時間を見ます。", "example_en": "I check the time with my watch."}, {"japanese": "靴", "kana": "くつ", "romaji": "kutsu", "english": "shoes", "pos": "noun", "example_ja": "新しい靴を買いました。", "example_en": "I bought new shoes."}, {"japanese": "歩く", "kana": "あるく", "romaji": "aruku", "english": "to walk", "pos": "verb", "example_ja": "毎日公園で歩きます。", "example_en": "I walk in the park every day."}], "words_es": [{"spanish": "mano", "gender": "la", "english": "hand", "pos": "noun", "example_es": "Tu mano es muy grande.", "example_en": "Your hand is really big."}, {"spanish": "anillo", "gender": "el", "english": "ring", "pos": "noun", "example_es": "Me gusta este anillo.", "example_en": "I like this ring."}, {"spanish": "reloj", "gender": "el", "english": "watch", "pos": "noun", "example_es": "Miro la hora en el reloj.", "example_en": "I check the time with my watch."}, {"spanish": "zapatos", "gender": "los", "english": "shoes", "pos": "noun", "example_es": "Compré zapatos nuevos.", "example_en": "I bought new shoes."}, {"spanish": "caminar", "gender": "", "english": "to walk", "pos": "verb", "example_es": "Camino en el parque todos los días.", "example_en": "I walk in the park every day."}], "local_image": "photos/Photo-Jun-23-2026-14-04-19.jpg"}, {"photo": "Photo Jun 23 2026, 14 11 24.jpg", "stem": "Photo Jun 23 2026, 14 11 24", "scene": "A quiet residential street with a sidewalk, parked cars, leafy trees, a stone wall, and a blue recycling bin at the curb.", "bbox": [[{"x1": 0, "y1": 60, "x2": 100, "y2": 92}], [{"x1": 58, "y1": 48, "x2": 82, "y2": 72}, {"x1": 78, "y1": 52, "x2": 100, "y2": 66}], [{"x1": 14, "y1": 12, "x2": 42, "y2": 60}], [{"x1": 12, "y1": 52, "x2": 28, "y2": 72}], null], "words": [{"hangul": "거리", "romanization": "geori", "english": "street", "pos": "noun", "example_ko": "이 거리는 아주 조용해요.", "example_en": "This street is very quiet."}, {"hangul": "차", "romanization": "cha", "english": "car", "pos": "noun", "example_ko": "차가 길에 주차되어 있어요.", "example_en": "A car is parked on the street."}, {"hangul": "나무", "romanization": "namu", "english": "tree", "pos": "noun", "example_ko": "나무가 정말 커요.", "example_en": "The tree is really big."}, {"hangul": "쓰레기통", "romanization": "sseuregitong", "english": "trash can", "pos": "noun", "example_ko": "쓰레기통이 파란색이에요.", "example_en": "The trash can is blue."}, {"hangul": "걷다", "romanization": "geotda", "english": "to walk", "pos": "verb", "example_ko": "저는 인도에서 걸어요.", "example_en": "I walk on the sidewalk."}], "words_ja": [{"japanese": "通り", "kana": "とおり", "romaji": "tōri", "english": "street", "pos": "noun", "example_ja": "この通りはとても静かです。", "example_en": "This street is very quiet."}, {"japanese": "車", "kana": "くるま", "romaji": "kuruma", "english": "car", "pos": "noun", "example_ja": "車が道に止まっています。", "example_en": "A car is parked on the street."}, {"japanese": "木", "kana": "き", "romaji": "ki", "english": "tree", "pos": "noun", "example_ja": "木が本当に大きいです。", "example_en": "The tree is really big."}, {"japanese": "ゴミ箱", "kana": "ゴミばこ", "romaji": "gomibako", "english": "trash can", "pos": "noun", "example_ja": "ゴミ箱は青いです。", "example_en": "The trash can is blue."}, {"japanese": "歩く", "kana": "あるく", "romaji": "aruku", "english": "to walk", "pos": "verb", "example_ja": "私は歩道を歩きます。", "example_en": "I walk on the sidewalk."}], "words_es": [{"spanish": "calle", "gender": "la", "english": "street", "pos": "noun", "example_es": "Esta calle es muy tranquila.", "example_en": "This street is very quiet."}, {"spanish": "coche", "gender": "el", "english": "car", "pos": "noun", "example_es": "Un coche está estacionado en la calle.", "example_en": "A car is parked on the street."}, {"spanish": "árbol", "gender": "el", "english": "tree", "pos": "noun", "example_es": "El árbol es muy grande.", "example_en": "The tree is really big."}, {"spanish": "basurero", "gender": "el", "english": "trash can", "pos": "noun", "example_es": "El basurero es azul.", "example_en": "The trash can is blue."}, {"spanish": "caminar", "gender": "", "english": "to walk", "pos": "verb", "example_es": "Yo camino por la acera.", "example_en": "I walk on the sidewalk."}], "local_image": "photos/Photo-Jun-23-2026-14-11-24.jpg"}, {"photo": "Photo Jun 23 2026, 16 41 46.jpg", "stem": "Photo Jun 23 2026, 16 41 46", "scene": "A kitchen sink with a large silver pot, rubber gloves draped over the edge, potted plants on the windowsill, and gray cabinets all around.", "bbox": [[{"x1": 22, "y1": 38, "x2": 78, "y2": 75}], [{"x1": 62, "y1": 40, "x2": 93, "y2": 72}], [{"x1": 27, "y1": 1, "x2": 73, "y2": 32}], null, [{"x1": 30, "y1": 4, "x2": 68, "y2": 36}]], "words": [{"hangul": "싱크대", "romanization": "singkeu-dae", "english": "kitchen sink", "pos": "noun", "example_ko": "싱크대에 그릇이 많아요.", "example_en": "There are a lot of dishes in the sink."}, {"hangul": "냄비", "romanization": "naembi", "english": "pot", "pos": "noun", "example_ko": "냄비가 싱크대 옆에 있어요.", "example_en": "The pot is next to the sink."}, {"hangul": "창문", "romanization": "changmun", "english": "window", "pos": "noun", "example_ko": "창문이 열려 있어요.", "example_en": "The window is open."}, {"hangul": "씻다", "romanization": "ssitda", "english": "to wash", "pos": "verb", "example_ko": "그릇을 씻어요.", "example_en": "I wash the dishes."}, {"hangul": "화분", "romanization": "hwabun", "english": "potted plant", "pos": "noun", "example_ko": "창문 앞에 화분이 있어요.", "example_en": "There are potted plants in front of the window."}], "words_ja": [{"japanese": "シンク", "kana": "シンク", "romaji": "shinku", "english": "kitchen sink", "pos": "noun", "example_ja": "シンクにお皿がたくさんあります。", "example_en": "There are a lot of dishes in the sink."}, {"japanese": "鍋", "kana": "なべ", "romaji": "nabe", "english": "pot", "pos": "noun", "example_ja": "鍋はシンクの隣にあります。", "example_en": "The pot is next to the sink."}, {"japanese": "窓", "kana": "まど", "romaji": "mado", "english": "window", "pos": "noun", "example_ja": "窓が開いています。", "example_en": "The window is open."}, {"japanese": "洗う", "kana": "あらう", "romaji": "arau", "english": "to wash", "pos": "verb", "example_ja": "お皿を洗います。", "example_en": "I wash the dishes."}, {"japanese": "植木鉢", "kana": "うえきばち", "romaji": "uekibachi", "english": "potted plant", "pos": "noun", "example_ja": "窓の前に植木鉢があります。", "example_en": "There are potted plants in front of the window."}], "words_es": [{"spanish": "fregadero", "gender": "el", "english": "kitchen sink", "pos": "noun", "example_es": "Hay muchos platos en el fregadero.", "example_en": "There are a lot of dishes in the sink."}, {"spanish": "olla", "gender": "la", "english": "pot", "pos": "noun", "example_es": "La olla está al lado del fregadero.", "example_en": "The pot is next to the sink."}, {"spanish": "ventana", "gender": "la", "english": "window", "pos": "noun", "example_es": "La ventana está abierta.", "example_en": "The window is open."}, {"spanish": "lavar", "gender": "", "english": "to wash", "pos": "verb", "example_es": "Lavo los platos.", "example_en": "I wash the dishes."}, {"spanish": "maceta", "gender": "la", "english": "potted plant", "pos": "noun", "example_es": "Hay macetas frente a la ventana.", "example_en": "There are potted plants in front of the window."}], "local_image": "photos/Photo-Jun-23-2026-16-41-46.jpg"}, {"photo": "Photo Jun 23 2026, 16 42 06.jpg", "stem": "Photo Jun 23 2026, 16 42 06", "scene": "A kitchen countertop with a decorative ceramic pitcher holding wooden spoons, a knife block with knives and scissors, and small bowls on a granite surface.", "bbox": [[{"x1": 47, "y1": 28, "x2": 72, "y2": 85}], [{"x1": 57, "y1": 30, "x2": 68, "y2": 82}], [{"x1": 12, "y1": 5, "x2": 42, "y2": 42}], null, [{"x1": 0, "y1": 50, "x2": 18, "y2": 90}]], "words": [{"hangul": "칼", "romanization": "kal", "english": "knife", "pos": "noun", "example_ko": "이 칼은 아주 날카로워요.", "example_en": "This knife is very sharp."}, {"hangul": "가위", "romanization": "gawi", "english": "scissors", "pos": "noun", "example_ko": "가위가 어디 있어요?", "example_en": "Where are the scissors?"}, {"hangul": "숟가락", "romanization": "sutgarak", "english": "spoon", "pos": "noun", "example_ko": "나무 숟가락으로 저어요.", "example_en": "Stir it with a wooden spoon."}, {"hangul": "요리하다", "romanization": "yorihada", "english": "to cook", "pos": "verb", "example_ko": "지금 요리하고 있어요.", "example_en": "I'm cooking right now."}, {"hangul": "그릇", "romanization": "geuteut", "english": "bowl", "pos": "noun", "example_ko": "그릇을 씻어요.", "example_en": "I wash the bowl."}], "words_ja": [{"japanese": "包丁", "kana": "ほうちょう", "romaji": "hōchō", "english": "knife", "pos": "noun", "example_ja": "この包丁はよく切れます。", "example_en": "This knife cuts well."}, {"japanese": "はさみ", "kana": "はさみ", "romaji": "hasami", "english": "scissors", "pos": "noun", "example_ja": "はさみはどこですか。", "example_en": "Where are the scissors?"}, {"japanese": "スプーン", "kana": "スプーン", "romaji": "supūn", "english": "spoon", "pos": "noun", "example_ja": "木のスプーンでかき混ぜます。", "example_en": "Stir with a wooden spoon."}, {"japanese": "料理する", "kana": "りょうりする", "romaji": "ryōri suru", "english": "to cook", "pos": "verb", "example_ja": "今、料理しています。", "example_en": "I'm cooking right now."}, {"japanese": "お皿", "kana": "おさら", "romaji": "osara", "english": "bowl", "pos": "noun", "example_ja": "お皿を洗います。", "example_en": "I wash the dish."}], "words_es": [{"spanish": "cuchillo", "gender": "el", "english": "knife", "pos": "noun", "example_es": "Este cuchillo está muy afilado.", "example_en": "This knife is very sharp."}, {"spanish": "tijeras", "gender": "las", "english": "scissors", "pos": "noun", "example_es": "¿Dónde están las tijeras?", "example_en": "Where are the scissors?"}, {"spanish": "cuchara", "gender": "la", "english": "spoon", "pos": "noun", "example_es": "Mezcla con la cuchara de madera.", "example_en": "Mix with the wooden spoon."}, {"spanish": "cocinar", "gender": "", "english": "to cook", "pos": "verb", "example_es": "Estoy cocinando ahora.", "example_en": "I'm cooking right now."}, {"spanish": "tazón", "gender": "el", "english": "bowl", "pos": "noun", "example_es": "Voy a lavar el tazón.", "example_en": "I'm going to wash the bowl."}], "local_image": "photos/Photo-Jun-23-2026-16-42-06.jpg"}, {"photo": "Photo Jun 23 2026, 17 12 56.jpg", "stem": "Photo Jun 23 2026, 17 12 56", "scene": "A Trader Joe's reusable tote bag and a pair of teal Nike soccer cleats sit on green grass, likely at a sports field.", "bbox": [[{"x1": 55, "y1": 60, "x2": 100, "y2": 100}], [{"x1": 5, "y1": 8, "x2": 52, "y2": 68}], [{"x1": 48, "y1": 32, "x2": 83, "y2": 80}], null], "words": [{"hangul": "잔디", "romanization": "jandi", "english": "grass", "pos": "noun", "example_ko": "잔디가 정말 초록색이에요.", "example_en": "The grass is really green."}, {"hangul": "가방", "romanization": "gabang", "english": "bag", "pos": "noun", "example_ko": "이 가방에 뭐가 있어요?", "example_en": "What's in this bag?"}, {"hangul": "운동화", "romanization": "undong-hwa", "english": "athletic shoes", "pos": "noun", "example_ko": "새 운동화가 있어요.", "example_en": "I have new athletic shoes."}, {"hangul": "신다", "romanization": "shinda", "english": "to put on (shoes)", "pos": "verb", "example_ko": "운동화를 신어요.", "example_en": "I put on my athletic shoes."}], "words_ja": [{"japanese": "芝生", "kana": "しばふ", "romaji": "shibafu", "english": "grass", "pos": "noun", "example_ja": "芝生がとてもきれいです。", "example_en": "The grass is very beautiful."}, {"japanese": "かばん", "kana": "かばん", "romaji": "kaban", "english": "bag", "pos": "noun", "example_ja": "このかばんに何が入っていますか？", "example_en": "What's in this bag?"}, {"japanese": "スニーカー", "kana": "スニーカー", "romaji": "sunīkā", "english": "athletic shoes", "pos": "noun", "example_ja": "新しいスニーカーを持っています。", "example_en": "I have new athletic shoes."}, {"japanese": "履く", "kana": "はく", "romaji": "haku", "english": "to put on (shoes)", "pos": "verb", "example_ja": "スニーカーを履きます。", "example_en": "I put on my sneakers."}], "words_es": [{"spanish": "césped", "gender": "el", "english": "grass", "pos": "noun", "example_es": "El césped está muy verde.", "example_en": "The grass is very green."}, {"spanish": "bolsa", "gender": "la", "english": "bag", "pos": "noun", "example_es": "¿Qué hay en esta bolsa?", "example_en": "What's in this bag?"}, {"spanish": "zapatillas", "gender": "las", "english": "athletic shoes", "pos": "noun", "example_es": "Tengo zapatillas nuevas.", "example_en": "I have new athletic shoes."}, {"spanish": "ponerse", "gender": "", "english": "to put on (shoes)", "pos": "verb", "example_es": "Me pongo las zapatillas antes de jugar.", "example_en": "I put on my shoes before playing."}], "local_image": "photos/Photo-Jun-23-2026-17-12-56.jpg"}, {"photo": "Photo Jun 23 2026, 21 59 23.jpg", "stem": "Photo Jun 23 2026, 21 59 23", "scene": "A fluffy gray cat is curled up between rumpled blankets on a bed, bathed in purple ambient light.", "bbox": [[{"x1": 10, "y1": 5, "x2": 52, "y2": 65}], [{"x1": 25, "y1": 25, "x2": 90, "y2": 98}], [{"x1": 0, "y1": 55, "x2": 100, "y2": 100}], null], "words": [{"hangul": "고양이", "romanization": "goyangi", "english": "cat", "pos": "noun", "example_ko": "고양이가 이불 안에서 자고 있어요.", "example_en": "The cat is sleeping inside the blanket."}, {"hangul": "이불", "romanization": "ibul", "english": "blanket / comforter", "pos": "noun", "example_ko": "이불이 따뜻해요.", "example_en": "The blanket is warm."}, {"hangul": "침대", "romanization": "chimdae", "english": "bed", "pos": "noun", "example_ko": "침대에서 자요.", "example_en": "I sleep in the bed."}, {"hangul": "자다", "romanization": "jada", "english": "to sleep", "pos": "verb", "example_ko": "고양이가 자고 있어요.", "example_en": "The cat is sleeping."}], "words_ja": [{"japanese": "猫", "kana": "ねこ", "romaji": "neko", "english": "cat", "pos": "noun", "example_ja": "猫が布団の中で寝ています。", "example_en": "The cat is sleeping inside the blanket."}, {"japanese": "布団", "kana": "ふとん", "romaji": "futon", "english": "blanket / comforter", "pos": "noun", "example_ja": "布団があたたかいです。", "example_en": "The blanket is warm."}, {"japanese": "ベッド", "kana": "ベッド", "romaji": "beddo", "english": "bed", "pos": "noun", "example_ja": "ベッドで寝ます。", "example_en": "I sleep in the bed."}, {"japanese": "寝る", "kana": "ねる", "romaji": "neru", "english": "to sleep", "pos": "verb", "example_ja": "猫が寝ています。", "example_en": "The cat is sleeping."}], "words_es": [{"spanish": "gato", "gender": "el", "english": "cat", "pos": "noun", "example_es": "El gato está durmiendo en la cama.", "example_en": "The cat is sleeping on the bed."}, {"spanish": "manta", "gender": "la", "english": "blanket / comforter", "pos": "noun", "example_es": "La manta está muy caliente.", "example_en": "The blanket is very warm."}, {"spanish": "cama", "gender": "la", "english": "bed", "pos": "noun", "example_es": "El gato duerme en la cama.", "example_en": "The cat sleeps on the bed."}, {"spanish": "dormir", "gender": "", "english": "to sleep", "pos": "verb", "example_es": "El gato duerme todo el día.", "example_en": "The cat sleeps all day."}], "local_image": "photos/Photo-Jun-23-2026-21-59-23.jpg"}, {"photo": "Photo Jun 24 2026, 06 45 17.jpg", "stem": "Photo Jun 24 2026, 06 45 17", "scene": "A fluffy cream cat lounges on a sunny windowsill surrounded by potted houseplants, gazing out through a large window with a colorful stained glass decoration hanging in it.", "bbox": [[{"x1": 18, "y1": 50, "x2": 52, "y2": 93}], [{"x1": 3, "y1": 0, "x2": 93, "y2": 88}], [{"x1": 3, "y1": 50, "x2": 22, "y2": 88}, {"x1": 55, "y1": 38, "x2": 93, "y2": 93}], null], "words": [{"hangul": "고양이", "romanization": "goyangi", "english": "cat", "pos": "noun", "example_ko": "고양이가 창문 앞에 앉아 있어요.", "example_en": "The cat is sitting in front of the window."}, {"hangul": "창문", "romanization": "changmun", "english": "window", "pos": "noun", "example_ko": "창문 밖에 나무가 있어요.", "example_en": "There are trees outside the window."}, {"hangul": "화분", "romanization": "hwabun", "english": "potted plant", "pos": "noun", "example_ko": "창문 옆에 화분이 많아요.", "example_en": "There are many potted plants next to the window."}, {"hangul": "앉다", "romanization": "anda", "english": "to sit", "pos": "verb", "example_ko": "고양이가 창턱에 앉아요.", "example_en": "The cat sits on the windowsill."}], "words_ja": [{"japanese": "猫", "kana": "ねこ", "romaji": "neko", "english": "cat", "pos": "noun", "example_ja": "猫が窓の前に座っています。", "example_en": "The cat is sitting in front of the window."}, {"japanese": "窓", "kana": "まど", "romaji": "mado", "english": "window", "pos": "noun", "example_ja": "窓の外に木があります。", "example_en": "There are trees outside the window."}, {"japanese": "植木鉢", "kana": "うえきばち", "romaji": "uekibachi", "english": "potted plant", "pos": "noun", "example_ja": "窓のそばに植木鉢がたくさんあります。", "example_en": "There are many potted plants near the window."}, {"japanese": "座る", "kana": "すわる", "romaji": "suwaru", "english": "to sit", "pos": "verb", "example_ja": "猫が窓辺に座っています。", "example_en": "The cat is sitting by the window."}], "words_es": [{"spanish": "gato", "gender": "el", "english": "cat", "pos": "noun", "example_es": "El gato está sentado frente a la ventana.", "example_en": "The cat is sitting in front of the window."}, {"spanish": "ventana", "gender": "la", "english": "window", "pos": "noun", "example_es": "Hay árboles afuera de la ventana.", "example_en": "There are trees outside the window."}, {"spanish": "maceta", "gender": "la", "english": "potted plant", "pos": "noun", "example_es": "Hay muchas macetas al lado de la ventana.", "example_en": "There are many potted plants next to the window."}, {"spanish": "sentarse", "gender": "", "english": "to sit", "pos": "verb", "example_es": "El gato se sienta en el alféizar.", "example_en": "The cat sits on the windowsill."}], "local_image": "photos/Photo-Jun-24-2026-06-45-17.jpg"}, {"photo": "Photo Jun 25 2026, 09 17 33.jpg", "stem": "Photo Jun 25 2026, 09 17 33", "scene": "A tilted street-level shot of a pedestrian crossing push-button on a pole, with a yellow-capped fire hydrant and gray concrete sidewalk visible behind it.", "bbox": [[{"x1": 55, "y1": 46, "x2": 74, "y2": 68}], null, [{"x1": 48, "y1": 15, "x2": 100, "y2": 68}], [{"x1": 36, "y1": 2, "x2": 66, "y2": 40}]], "words": [{"hangul": "버튼", "romanization": "beoton", "english": "button", "pos": "noun", "example_ko": "이 버튼이 뭐예요?", "example_en": "What is this button?"}, {"hangul": "누르다", "romanization": "nureuda", "english": "to press", "pos": "verb", "example_ko": "버튼을 눌러 주세요.", "example_en": "Please press the button."}, {"hangul": "인도", "romanization": "indo", "english": "sidewalk", "pos": "noun", "example_ko": "인도로 걸어가세요.", "example_en": "Please walk on the sidewalk."}, {"hangul": "소화전", "romanization": "sohwajeon", "english": "fire hydrant", "pos": "noun", "example_ko": "소화전 앞에 주차하면 안 돼요.", "example_en": "You can't park in front of a fire hydrant."}], "words_ja": [{"japanese": "ボタン", "kana": "ボタン", "romaji": "botan", "english": "button", "pos": "noun", "example_ja": "このボタンは何ですか。", "example_en": "What is this button?"}, {"japanese": "押す", "kana": "おす", "romaji": "osu", "english": "to press", "pos": "verb", "example_ja": "ボタンを押してください。", "example_en": "Please press the button."}, {"japanese": "歩道", "kana": "ほどう", "romaji": "hodō", "english": "sidewalk", "pos": "noun", "example_ja": "歩道を歩いてください。", "example_en": "Please walk on the sidewalk."}, {"japanese": "消火栓", "kana": "しょうかせん", "romaji": "shōkasen", "english": "fire hydrant", "pos": "noun", "example_ja": "消火栓の前に駐車してはいけません。", "example_en": "You can't park in front of a fire hydrant."}], "words_es": [{"spanish": "botón", "gender": "el", "english": "button", "pos": "noun", "example_es": "¿Para qué es este botón?", "example_en": "What is this button for?"}, {"spanish": "presionar", "gender": "", "english": "to press", "pos": "verb", "example_es": "Presiona el botón para cruzar.", "example_en": "Press the button to cross."}, {"spanish": "acera", "gender": "la", "english": "sidewalk", "pos": "noun", "example_es": "Camina por la acera.", "example_en": "Walk on the sidewalk."}, {"spanish": "hidrante", "gender": "el", "english": "fire hydrant", "pos": "noun", "example_es": "No se puede estacionar frente al hidrante.", "example_en": "You can't park in front of the fire hydrant."}], "local_image": "photos/Photo-Jun-25-2026-09-17-33.jpg"}, {"photo": "Photo Jun 25 2026, 09 21 53.jpg", "stem": "Photo Jun 25 2026, 09 21 53", "scene": "A city intersection on a sunny morning with a red traffic light, white crosswalk stripes painted on the road, and a green bicycle lane.", "bbox": [[{"x1": 27, "y1": 8, "x2": 45, "y2": 35}], [{"x1": 48, "y1": 40, "x2": 92, "y2": 75}], [{"x1": 42, "y1": 0, "x2": 100, "y2": 90}], null, [{"x1": 60, "y1": 68, "x2": 100, "y2": 100}]], "words": [{"hangul": "신호등", "romanization": "sinhodeung", "english": "traffic light", "pos": "noun", "example_ko": "신호등이 빨간색이에요.", "example_en": "The traffic light is red."}, {"hangul": "횡단보도", "romanization": "hoengdanbodo", "english": "crosswalk", "pos": "noun", "example_ko": "횡단보도에서 기다려요.", "example_en": "I wait at the crosswalk."}, {"hangul": "길", "romanization": "gil", "english": "road / street", "pos": "noun", "example_ko": "이 길은 넓어요.", "example_en": "This road is wide."}, {"hangul": "건너다", "romanization": "geonneoda", "english": "to cross", "pos": "verb", "example_ko": "지금 길을 건너요.", "example_en": "I am crossing the road now."}, {"hangul": "자전거", "romanization": "jajeongeo", "english": "bicycle", "pos": "noun", "example_ko": "저기에 자전거 도로가 있어요.", "example_en": "There is a bicycle lane over there."}], "words_ja": [{"japanese": "信号機", "kana": "しんごうき", "romaji": "shingōki", "english": "traffic light", "pos": "noun", "example_ja": "信号機が赤です。", "example_en": "The traffic light is red."}, {"japanese": "横断歩道", "kana": "おうだんほどう", "romaji": "ōdan hodō", "english": "crosswalk", "pos": "noun", "example_ja": "横断歩道で待ちます。", "example_en": "I wait at the crosswalk."}, {"japanese": "道", "kana": "みち", "romaji": "michi", "english": "road / street", "pos": "noun", "example_ja": "この道は広いです。", "example_en": "This road is wide."}, {"japanese": "渡る", "kana": "わたる", "romaji": "wataru", "english": "to cross", "pos": "verb", "example_ja": "今、道を渡ります。", "example_en": "I am crossing the road now."}, {"japanese": "自転車", "kana": "じてんしゃ", "romaji": "jitensha", "english": "bicycle", "pos": "noun", "example_ja": "あそこに自転車レーンがあります。", "example_en": "There is a bicycle lane over there."}], "words_es": [{"spanish": "semáforo", "gender": "el", "english": "traffic light", "pos": "noun", "example_es": "El semáforo está en rojo.", "example_en": "The traffic light is red."}, {"spanish": "paso peatonal", "gender": "el", "english": "crosswalk", "pos": "noun", "example_es": "Espero en el paso peatonal.", "example_en": "I wait at the crosswalk."}, {"spanish": "calle", "gender": "la", "english": "road / street", "pos": "noun", "example_es": "Esta calle es ancha.", "example_en": "This road is wide."}, {"spanish": "cruzar", "gender": "", "english": "to cross", "pos": "verb", "example_es": "Ahora cruzo la calle.", "example_en": "I am crossing the road now."}, {"spanish": "bicicleta", "gender": "la", "english": "bicycle", "pos": "noun", "example_es": "Allí hay un carril para bicicletas.", "example_en": "There is a bicycle lane over there."}], "local_image": "photos/Photo-Jun-25-2026-09-21-53.jpg"}, {"photo": "Photo Jun 25 2026, 11 26 25.jpg", "stem": "Photo Jun 25 2026, 11 26 25", "scene": "A college classroom full of students sitting at desk-chairs with laptops, shot from the teacher's perspective with a Partner talk activity on screen in the foreground.", "bbox": [[{"x1": 5, "y1": 15, "x2": 90, "y2": 55}], [{"x1": 20, "y1": 35, "x2": 100, "y2": 72}], [{"x1": 0, "y1": 55, "x2": 80, "y2": 100}], [{"x1": 0, "y1": 0, "x2": 100, "y2": 65}], null], "words": [{"hangul": "학생", "romanization": "haksaeng", "english": "student", "pos": "noun", "example_ko": "학생들이 교실에 앉아 있어요.", "example_en": "The students are sitting in the classroom."}, {"hangul": "의자", "romanization": "uija", "english": "chair", "pos": "noun", "example_ko": "의자에 앉으세요.", "example_en": "Please sit in the chair."}, {"hangul": "노트북", "romanization": "noteubuk", "english": "laptop", "pos": "noun", "example_ko": "노트북을 열어요.", "example_en": "Open the laptop."}, {"hangul": "교실", "romanization": "gyosil", "english": "classroom", "pos": "noun", "example_ko": "교실이 넓어요.", "example_en": "The classroom is big."}, {"hangul": "앉다", "romanization": "anda", "english": "to sit", "pos": "verb", "example_ko": "여기 앉으세요.", "example_en": "Please sit here."}], "words_ja": [{"japanese": "学生", "kana": "がくせい", "romaji": "gakusei", "english": "student", "pos": "noun", "example_ja": "学生がたくさんいます。", "example_en": "There are many students."}, {"japanese": "椅子", "kana": "いす", "romaji": "isu", "english": "chair", "pos": "noun", "example_ja": "椅子に座ってください。", "example_en": "Please sit in the chair."}, {"japanese": "ノートパソコン", "kana": "ノートパソコン", "romaji": "nōto pasokon", "english": "laptop", "pos": "noun", "example_ja": "ノートパソコンを使っています。", "example_en": "I am using a laptop."}, {"japanese": "教室", "kana": "きょうしつ", "romaji": "kyōshitsu", "english": "classroom", "pos": "noun", "example_ja": "教室に学生がいます。", "example_en": "There are students in the classroom."}, {"japanese": "座る", "kana": "すわる", "romaji": "suwaru", "english": "to sit", "pos": "verb", "example_ja": "ここに座ってください。", "example_en": "Please sit here."}], "words_es": [{"spanish": "estudiante", "gender": "el", "english": "student", "pos": "noun", "example_es": "Los estudiantes están en la clase.", "example_en": "The students are in the class."}, {"spanish": "silla", "gender": "la", "english": "chair", "pos": "noun", "example_es": "Por favor, siéntate en la silla.", "example_en": "Please sit in the chair."}, {"spanish": "laptop", "gender": "la", "english": "laptop", "pos": "noun", "example_es": "Abre tu laptop, por favor.", "example_en": "Open your laptop, please."}, {"spanish": "clase", "gender": "la", "english": "classroom", "pos": "noun", "example_es": "Hay muchos estudiantes en la clase.", "example_en": "There are many students in the class."}, {"spanish": "sentarse", "gender": "", "english": "to sit", "pos": "verb", "example_es": "Por favor, siéntate aquí.", "example_en": "Please sit here."}], "local_image": "photos/Photo-Jun-25-2026-11-26-25.jpg"}, {"photo": "Photo Jun 25 2026, 15 53 03.jpg", "stem": "Photo Jun 25 2026, 15 53 03", "scene": "A cozy living room corner with a flat-screen TV, a wooden dresser topped with a vintage radio, several lush houseplants, and a sofa in the background.", "bbox": [[{"x1": 13, "y1": 20, "x2": 55, "y2": 63}], [{"x1": 42, "y1": 15, "x2": 87, "y2": 77}], [{"x1": 5, "y1": 50, "x2": 62, "y2": 100}, {"x1": 72, "y1": 72, "x2": 100, "y2": 100}], [{"x1": 55, "y1": 0, "x2": 100, "y2": 30}], null], "words": [{"hangul": "텔레비전", "romanization": "tellebijeon", "english": "television", "pos": "noun", "example_ko": "텔레비전이 꺼져 있어요.", "example_en": "The TV is turned off."}, {"hangul": "서랍장", "romanization": "seorapjang", "english": "dresser / chest of drawers", "pos": "noun", "example_ko": "서랍장 위에 라디오가 있어요.", "example_en": "There is a radio on top of the dresser."}, {"hangul": "화분", "romanization": "hwabun", "english": "potted plant", "pos": "noun", "example_ko": "방에 화분이 많아요.", "example_en": "There are many potted plants in the room."}, {"hangul": "소파", "romanization": "sopa", "english": "sofa", "pos": "noun", "example_ko": "소파가 아주 편해 보여요.", "example_en": "The sofa looks very comfortable."}, {"hangul": "켜다", "romanization": "kyeoda", "english": "to turn on (electronics)", "pos": "verb", "example_ko": "텔레비전을 켜 주세요.", "example_en": "Please turn on the TV."}], "words_ja": [{"japanese": "テレビ", "kana": "テレビ", "romaji": "terebi", "english": "television", "pos": "noun", "example_ja": "テレビが消えています。", "example_en": "The TV is turned off."}, {"japanese": "タンス", "kana": "タンス", "romaji": "tansu", "english": "dresser / chest of drawers", "pos": "noun", "example_ja": "タンスの上にラジオがあります。", "example_en": "There is a radio on top of the dresser."}, {"japanese": "植木鉢", "kana": "うえきばち", "romaji": "uekibachi", "english": "potted plant", "pos": "noun", "example_ja": "部屋に植木鉢がたくさんあります。", "example_en": "There are many potted plants in the room."}, {"japanese": "ソファ", "kana": "ソファ", "romaji": "sofa", "english": "sofa", "pos": "noun", "example_ja": "ソファはとても気持ちよさそうです。", "example_en": "The sofa looks very comfortable."}, {"japanese": "つける", "kana": "つける", "romaji": "tsukeru", "english": "to turn on (electronics)", "pos": "verb", "example_ja": "テレビをつけてください。", "example_en": "Please turn on the TV."}], "words_es": [{"spanish": "televisión", "gender": "la", "english": "television", "pos": "noun", "example_es": "La televisión está apagada.", "example_en": "The TV is turned off."}, {"spanish": "cómoda", "gender": "la", "english": "dresser / chest of drawers", "pos": "noun", "example_es": "Hay una radio encima de la cómoda.", "example_en": "There is a radio on top of the dresser."}, {"spanish": "maceta", "gender": "la", "english": "potted plant", "pos": "noun", "example_es": "Hay muchas macetas en la habitación.", "example_en": "There are many potted plants in the room."}, {"spanish": "sofá", "gender": "el", "english": "sofa", "pos": "noun", "example_es": "El sofá parece muy cómodo.", "example_en": "The sofa looks very comfortable."}, {"spanish": "encender", "gender": "", "english": "to turn on (electronics)", "pos": "verb", "example_es": "Por favor, enciende la televisión.", "example_en": "Please turn on the TV."}], "local_image": "photos/Photo-Jun-25-2026-15-53-03.jpg"}, {"photo": "Photo Jun 25 2026, 20 10 07.jpg", "stem": "Photo Jun 25 2026, 20 10 07", "scene": "A man dressed as a king — wearing a flowing red and gold cape, a golden crown, and glasses — laughs while holding a sword on a performance stage.", "bbox": [[{"x1": 42, "y1": 35, "x2": 62, "y2": 65}], [{"x1": 20, "y1": 22, "x2": 88, "y2": 80}], [{"x1": 28, "y1": 44, "x2": 76, "y2": 58}], [{"x1": 0, "y1": 88, "x2": 100, "y2": 100}], null], "words": [{"hangul": "왕관", "romanization": "wanggwan", "english": "crown", "pos": "noun", "example_ko": "왕관을 쓰고 있어요.", "example_en": "He is wearing a crown."}, {"hangul": "망토", "romanization": "mangto", "english": "cape", "pos": "noun", "example_ko": "빨간 망토가 멋있어요.", "example_en": "The red cape is cool."}, {"hangul": "칼", "romanization": "kal", "english": "sword", "pos": "noun", "example_ko": "칼을 들고 있어요.", "example_en": "He is holding a sword."}, {"hangul": "무대", "romanization": "mudae", "english": "stage", "pos": "noun", "example_ko": "무대 위에 서 있어요.", "example_en": "He is standing on stage."}, {"hangul": "들다", "romanization": "deulda", "english": "to hold", "pos": "verb", "example_ko": "두 손으로 들어요.", "example_en": "I hold it with both hands."}], "words_ja": [{"japanese": "王冠", "kana": "おうかん", "romaji": "ōkan", "english": "crown", "pos": "noun", "example_ja": "王冠をかぶっています。", "example_en": "He is wearing a crown."}, {"japanese": "マント", "kana": "マント", "romaji": "manto", "english": "cape", "pos": "noun", "example_ja": "赤いマントが格好いいです。", "example_en": "The red cape is cool."}, {"japanese": "剣", "kana": "けん", "romaji": "ken", "english": "sword", "pos": "noun", "example_ja": "剣を持っています。", "example_en": "He is holding a sword."}, {"japanese": "舞台", "kana": "ぶたい", "romaji": "butai", "english": "stage", "pos": "noun", "example_ja": "舞台の上に立っています。", "example_en": "He is standing on stage."}, {"japanese": "持つ", "kana": "もつ", "romaji": "motsu", "english": "to hold", "pos": "verb", "example_ja": "両手で持ちます。", "example_en": "I hold it with both hands."}], "words_es": [{"spanish": "corona", "gender": "la", "english": "crown", "pos": "noun", "example_es": "Lleva una corona en la cabeza.", "example_en": "He wears a crown on his head."}, {"spanish": "capa", "gender": "la", "english": "cape", "pos": "noun", "example_es": "La capa roja es muy elegante.", "example_en": "The red cape is very elegant."}, {"spanish": "espada", "gender": "la", "english": "sword", "pos": "noun", "example_es": "Sostiene una espada con las dos manos.", "example_en": "He holds a sword with both hands."}, {"spanish": "escenario", "gender": "el", "english": "stage", "pos": "noun", "example_es": "Está de pie en el escenario.", "example_en": "He is standing on stage."}, {"spanish": "sostener", "gender": "", "english": "to hold", "pos": "verb", "example_es": "Sostengo el micrófono con una mano.", "example_en": "I hold the microphone with one hand."}], "local_image": "photos/Photo-Jun-25-2026-20-10-07.jpg"}];
         let currentSlide = 0;
         let lang = 'ko';
-        let gameMode = false;
+        let mode = 'random';       // 'random' | 'gallery' | 'clicktarget'
+        let galleryPhotoIdx = -1;  // which photo is active in gallery single-photo game
+        let streak = 0;
 
         const LANG = {
-            ko: { title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true, tts: 'ko-KR',
-                   game: '사진 게임', heading: '사진 게임 · 눌러보세요', find: '찾기', miss: '아쉬워요', next: '다음 →', seeScore: '점수 보기 →', playAgain: '다시 하기', score: (n, t) => n + ' / ' + t + ' 맞췄어요!' },
-            ja: { title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese, reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '), example: w => w.example_ja, audio: false, tts: 'ja-JP',
-                   game: '写真ゲーム', heading: '写真ゲーム · タップしよう', find: '探そう', miss: 'おしい', next: '次へ →', seeScore: 'スコア →', playAgain: 'もう一度', score: (n, t) => n + ' / ' + t + ' 正解！' },
-            es: { title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish, reading: w => w.gender || '', example: w => w.example_es, audio: false, tts: 'es-ES',
-                   game: 'Juego de fotos', heading: 'Juego de fotos · toca el objeto', find: 'Busca', miss: 'casi', next: 'siguiente →', seeScore: 'ver puntaje →', playAgain: 'otra vez', score: (n, t) => '¡' + n + ' de ' + t + '!' },
+            ko: { title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization,
+                   example: w => w.example_ko, audio: true, tts: 'ko-KR',
+                   heading: '사진 게임 · 눌러보세요', find: '찾기', miss: '아쉬워요',
+                   next: '다음 →', seeScore: '점수 보기 →', playAgain: '다시 하기',
+                   backGallery: '← 갤러리',
+                   score: (n, t) => n + ' / ' + t + ' 맞췄어요!' },
+            ja: { title: 'Japanese from Photos', words: 'words_ja', front: w => w.japanese,
+                   reading: w => [w.kana, w.romaji].filter(Boolean).join(' · '),
+                   example: w => w.example_ja, audio: false, tts: 'ja-JP',
+                   heading: '写真ゲーム · タップしよう', find: '探そう', miss: 'おしい',
+                   next: '次へ →', seeScore: 'スコア →', playAgain: 'もう一度',
+                   backGallery: '← ギャラリー',
+                   score: (n, t) => n + ' / ' + t + ' 正解！' },
+            es: { title: 'Spanish from Photos', words: 'words_es', front: w => w.spanish,
+                   reading: w => w.gender || '', example: w => w.example_es, audio: false, tts: 'es-ES',
+                   heading: 'Juego de fotos · toca el objeto', find: 'Busca', miss: 'casi',
+                   next: 'siguiente →', seeScore: 'ver puntaje →', playAgain: 'otra vez',
+                   backGallery: '← galería',
+                   score: (n, t) => '¡' + n + ' de ' + t + '!' },
         };
 
         function wordsFor(photo) { return photo[LANG[lang].words] || []; }
 
-        // Build challenges from bbox data — language-independent (photo index + word index + hotspot boxes)
+        // Challenges are language-independent: photo index + word index + hotspot boxes
         function buildChallenges() {
             const list = [];
             photos.forEach((photo, pIdx) => {
@@ -170,12 +223,13 @@
 
         let qChallenges = [], qIdx = 0, qScore = 0;
 
+        // ── Utilities ───────────────────────────────────────────────
+
         function speak(text, langCode) {
             try {
                 window.speechSynthesis.cancel();
                 const u = new SpeechSynthesisUtterance(text);
-                u.lang = langCode || 'ko-KR';
-                u.rate = 0.9;
+                u.lang = langCode || 'ko-KR'; u.rate = 0.9;
                 window.speechSynthesis.speak(u);
             } catch (e) {}
         }
@@ -208,30 +262,79 @@
             document.getElementById('q-word').textContent = LANG[lang].front(w);
         }
 
-        // ── Mode switching ──────────────────────────────────────────
-
-        function enterGame() {
-            if (!hasQuiz) return;
-            gameMode = true;
-            document.getElementById('slides-container').style.display = 'none';
-            document.getElementById('nav-controls').style.display = 'none';
-            document.getElementById('game-panel').style.display = '';
-            document.getElementById('gameBtn').classList.add('active');
-            qStart();
+        function updateStreak(hit) {
+            if (hit === null) { streak = 0; }
+            else if (hit) { streak++; }
+            else { streak = 0; }
+            const el = document.getElementById('q-streak');
+            el.textContent = streak >= 2 ? '🔥 ' + streak : '';
         }
 
-        function exitGame() {
-            gameMode = false;
-            document.getElementById('game-panel').style.display = 'none';
-            document.getElementById('slides-container').style.display = '';
-            document.getElementById('nav-controls').style.display = '';
-            document.getElementById('gameBtn').classList.remove('active');
+        // ── Panel switching ─────────────────────────────────────────
+
+        function showPanel(which) {
+            document.getElementById('slides-container').style.display = which === 'random' ? '' : 'none';
+            document.getElementById('nav-controls').style.display   = which === 'random' ? '' : 'none';
+            document.getElementById('gallery-panel').style.display  = which === 'gallery' ? '' : 'none';
+            document.getElementById('game-panel').style.display     = which === 'game'    ? '' : 'none';
+        }
+
+        function setMode(newMode) {
+            if (newMode === 'clicktarget' && !hasQuiz) return;
+            mode = newMode;
+            document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+            try { window.speechSynthesis.cancel(); } catch(e) {}
+            if (mode === 'random') {
+                showPanel('random');
+            } else if (mode === 'gallery') {
+                galleryPhotoIdx = -1;
+                showPanel('gallery');
+                renderGallery();
+            } else if (mode === 'clicktarget') {
+                showPanel('game');
+                document.getElementById('exitGameBtn').textContent = '← random';
+                document.getElementById('exitGameBtn').onclick = () => setMode('random');
+                streak = 0; updateStreak(null);
+                qStartAllPhotos();
+            }
+        }
+
+        // ── Gallery ─────────────────────────────────────────────────
+
+        function renderGallery() {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = '';
+            photos.forEach((photo, idx) => {
+                const challenges = QUIZ.filter(ch => ch.photo === idx);
+                const div = document.createElement('div');
+                div.className = 'gallery-thumb' + (challenges.length === 0 ? ' no-game' : '');
+                div.innerHTML = `<img src="${encodeURI(photo.local_image || '')}" alt="${photo.scene || ''}" onerror="this.style.opacity=0.3">
+                    ${challenges.length > 0 ? `<span class="thumb-badge">${challenges.length}</span>` : ''}`;
+                if (challenges.length > 0) {
+                    div.addEventListener('click', () => selectGalleryPhoto(idx));
+                }
+                grid.appendChild(div);
+            });
+        }
+
+        function selectGalleryPhoto(pIdx) {
+            galleryPhotoIdx = pIdx;
+            showPanel('game');
+            document.getElementById('exitGameBtn').textContent = '← gallery';
+            document.getElementById('exitGameBtn').onclick = returnToGallery;
+            streak = 0; updateStreak(null);
+            qStartSinglePhoto(pIdx);
+        }
+
+        function returnToGallery() {
+            galleryPhotoIdx = -1;
+            showPanel('gallery');
             try { window.speechSynthesis.cancel(); } catch(e) {}
         }
 
-        // ── Game logic ──────────────────────────────────────────────
+        // ── Game: start ─────────────────────────────────────────────
 
-        function qStart() {
+        function qStartAllPhotos() {
             qChallenges = qShuffle(QUIZ);
             qIdx = 0; qScore = 0;
             document.getElementById('q-score').style.display = 'none';
@@ -239,13 +342,25 @@
             qLoad();
         }
 
+        function qStartSinglePhoto(pIdx) {
+            qChallenges = QUIZ.filter(ch => ch.photo === pIdx);
+            if (!qChallenges.length) { returnToGallery(); return; }
+            qIdx = 0; qScore = 0;
+            document.getElementById('q-score').style.display = 'none';
+            document.getElementById('q-main').style.display = '';
+            qLoad();
+        }
+
+        // ── Game: load & click ──────────────────────────────────────
+
         function qLoad() {
             const ch = qChallenges[qIdx];
             if (!ch) return;
             document.getElementById('q-photo').src = encodeURI(photos[ch.photo].local_image || '');
             qRenderPrompt();
-            const fb = document.getElementById('q-feedback');
-            fb.textContent = ''; fb.style.color = '#7A7770';
+            document.getElementById('q-feedback').textContent = '';
+            document.getElementById('q-feedback').style.color = '#7A7770';
+            document.getElementById('q-english').textContent = '';
             document.getElementById('q-counter').textContent = (qIdx + 1) + ' / ' + qChallenges.length;
             const nxt = document.getElementById('q-next');
             nxt.style.display = 'none'; nxt.onclick = null;
@@ -258,34 +373,33 @@
         function qClick(e) {
             const ch = qChallenges[qIdx];
             const wrap = document.getElementById('q-wrap');
-            const img = document.getElementById('q-photo');
+            const img  = document.getElementById('q-photo');
             const rect = img.getBoundingClientRect();
-            const xPct = (e.clientX - rect.left) / rect.width * 100;
-            const yPct = (e.clientY - rect.top) / rect.height * 100;
-            const hit = ch.hotspot.some(hs => xPct >= hs.x1 && xPct <= hs.x2 && yPct >= hs.y1 && yPct <= hs.y2);
+            const xPct = (e.clientX - rect.left) / rect.width  * 100;
+            const yPct = (e.clientY - rect.top)  / rect.height * 100;
+            const hit  = ch.hotspot.some(hs => xPct >= hs.x1 && xPct <= hs.x2 && yPct >= hs.y1 && yPct <= hs.y2);
 
             wrap.onclick = null;
             wrap.style.cursor = 'default';
 
             const dot = document.createElement('div');
             dot.className = 'click-dot ' + (hit ? 'hit' : 'miss');
-            dot.style.left = xPct + '%';
-            dot.style.top = yPct + '%';
+            dot.style.left = xPct + '%'; dot.style.top = yPct + '%';
             wrap.appendChild(dot);
 
             ch.hotspot.forEach(hs => {
                 const box = document.createElement('div');
                 box.className = 'hotspot-box';
-                box.style.left = hs.x1 + '%';
-                box.style.top = hs.y1 + '%';
-                box.style.width = (hs.x2 - hs.x1) + '%';
+                box.style.left   = hs.x1 + '%';  box.style.top    = hs.y1 + '%';
+                box.style.width  = (hs.x2 - hs.x1) + '%';
                 box.style.height = (hs.y2 - hs.y1) + '%';
                 wrap.appendChild(box);
                 requestAnimationFrame(() => box.classList.add('show'));
             });
 
-            const fb = document.getElementById('q-feedback');
-            const w = qWord();
+            const w   = qWord();
+            const fb  = document.getElementById('q-feedback');
+            const eng = document.getElementById('q-english');
             if (hit) {
                 qScore++;
                 fb.textContent = w ? '✓ ' + LANG[lang].front(w) : '✓';
@@ -295,6 +409,8 @@
                 fb.textContent = '✗ ' + LANG[lang].miss;
                 fb.style.color = '#B85454';
             }
+            eng.textContent = w ? w.english : '';
+            updateStreak(hit);
 
             const nxt = document.getElementById('q-next');
             nxt.style.display = 'inline-block';
@@ -311,7 +427,18 @@
             document.getElementById('q-main').style.display = 'none';
             const scr = document.getElementById('q-score');
             scr.querySelector('.q-score-text').textContent = LANG[lang].score(qScore, qChallenges.length);
-            scr.querySelector('#q-replay').textContent = LANG[lang].playAgain;
+            const replayBtn  = document.getElementById('q-replay');
+            const galleryBtn = document.getElementById('q-back-gallery');
+            replayBtn.textContent = LANG[lang].playAgain;
+            if (mode === 'gallery') {
+                replayBtn.onclick = () => qStartSinglePhoto(galleryPhotoIdx);
+                galleryBtn.textContent = LANG[lang].backGallery;
+                galleryBtn.style.display = 'inline-block';
+                galleryBtn.onclick = returnToGallery;
+            } else {
+                replayBtn.onclick = qStartAllPhotos;
+                galleryBtn.style.display = 'none';
+            }
             scr.style.display = '';
         }
 
@@ -322,22 +449,20 @@
             container.innerHTML = '';
             document.getElementById('title').textContent = LANG[lang].title;
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-            document.getElementById('gameBtn').style.display = hasQuiz ? '' : 'none';
-            document.getElementById('gameBtnLabel').textContent = LANG[lang].game;
+            if (!hasQuiz) document.getElementById('tabClickTarget').disabled = true;
             photos.forEach((photo, idx) => {
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
                 const photoUrl = encodeURI(photo.local_image || '');
                 const words = wordsFor(photo);
-                const html = `
+                slide.innerHTML = `
                     <div class="photo-container">
                         <img src="${photoUrl}" alt="${photo.scene}" class="photo" onerror="this.style.display='none'" />
                     </div>
                     <div class="vocab-cards">
                         ${words.map((word, widx) => {
                             const reading = LANG[lang].reading(word);
-                            return `
-                            <div class="card" data-word="${widx}">
+                            return `<div class="card" data-word="${widx}">
                                 <div class="word-front">${LANG[lang].front(word)}</div>
                                 <div class="reveal">
                                     ${reading ? `<div class="romanization">${reading}</div>` : ''}
@@ -347,9 +472,7 @@
                                 </div>
                             </div>`;
                         }).join('')}
-                    </div>
-                `;
-                slide.innerHTML = html;
+                    </div>`;
                 container.appendChild(slide);
             });
             document.getElementById('totalSlides').textContent = photos.length;
@@ -380,25 +503,27 @@
             if (!LANG[next] || next === lang) return;
             lang = next;
             renderSlides();
-            if (gameMode) {
-                qRenderPrompt();
-            } else {
+            if (mode === 'random') {
                 showSlide(currentSlide);
+            } else if (mode === 'clicktarget' || (mode === 'gallery' && galleryPhotoIdx >= 0)) {
+                qRenderPrompt();
             }
         }
 
+        // ── Event listeners ─────────────────────────────────────────
+
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.addEventListener('click', () => setMode(tab.dataset.mode));
+        });
         document.getElementById('prevBtn').addEventListener('click', () => showSlide(currentSlide - 1));
         document.getElementById('nextBtn').addEventListener('click', () => showSlide(currentSlide + 1));
         document.getElementById('langPicker').addEventListener('click', (e) => {
             const btn = e.target.closest('.lang-btn');
             if (btn) setLang(btn.dataset.lang);
         });
-        document.getElementById('gameBtn').addEventListener('click', enterGame);
-        document.getElementById('exitGameBtn').addEventListener('click', exitGame);
-        document.getElementById('q-replay').addEventListener('click', qStart);
         document.addEventListener('keydown', (e) => {
-            if (gameMode) return;
-            if (e.key === 'ArrowLeft') showSlide(currentSlide - 1);
+            if (mode !== 'random') return;
+            if (e.key === 'ArrowLeft')  showSlide(currentSlide - 1);
             if (e.key === 'ArrowRight') showSlide(currentSlide + 1);
         });
 
