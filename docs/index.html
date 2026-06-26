@@ -689,6 +689,184 @@
             if (e.key === 'ArrowRight') showSlide(currentSlide + 1);
         });
 
+        // ── Dev bbox editor ─────────────────────────────────────────
+        // Hidden tool, toggled with the 'x' key. Lets you drag/resize/add/
+        // delete the green click-target boxes per word and save them back to
+        // the source JSON. Saving only works when the page is served from the
+        // local bbox_editor.py server (localhost); on the public site the
+        // editor is read-only so nothing here can touch the live data.
+        const DEV_CAN_SAVE = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+        let devActive = false, devPhoto = 0, devSel = 0, devBbox = null, devDirty = false;
+
+        function clampPct(v) { return Math.max(0, Math.min(100, v)); }
+        function round1(v) { return Math.round(v * 10) / 10; }
+        function devClone(b) { return JSON.parse(JSON.stringify(b == null ? null : b)); }
+        function devMsg(t, c) { const m = document.getElementById('dev-msg'); m.textContent = t || ''; m.style.color = c || '#888'; }
+
+        function devEnter() {
+            devActive = true;
+            document.getElementById('dev-panel').classList.add('active');
+            try { window.speechSynthesis.cancel(); } catch (e) {}
+            const save = document.getElementById('dev-save');
+            save.disabled = !DEV_CAN_SAVE;
+            devLoadPhoto(devPhoto);
+            if (!DEV_CAN_SAVE) devMsg('read-only — run bbox_editor.py to save', '#d4a017');
+        }
+        function devExit() {
+            if (devDirty && !confirm('Unsaved changes on this photo will be lost. Exit anyway?')) return;
+            devActive = false;
+            document.getElementById('dev-panel').classList.remove('active');
+        }
+
+        function devLoadPhoto(idx) {
+            devPhoto = Math.max(0, Math.min(idx, photos.length - 1));
+            const p = photos[devPhoto];
+            const concepts = p.concepts || [];
+            // Normalize bbox to concept length: each slot is an array of boxes or null.
+            let b = devClone(p.bbox) || [];
+            while (b.length < concepts.length) b.push(null);
+            b = b.slice(0, concepts.length).map(x =>
+                Array.isArray(x) ? x.map(r => ({ x1: +r.x1, y1: +r.y1, x2: +r.x2, y2: +r.y2 })) : null);
+            devBbox = b;
+            devSel = 0; devDirty = false;
+            document.getElementById('dev-img').src = encodeURI(p.local_image || '');
+            document.getElementById('dev-counter').textContent = (devPhoto + 1) + ' / ' + photos.length;
+            document.getElementById('dev-fname').textContent = p.photo || '';
+            devMsg('');
+            devRenderWords();
+            devRenderBoxes();
+        }
+
+        function devWordLabel(i) {
+            const c = (photos[devPhoto].concepts || [])[i] || {};
+            const en = c.langs && c.langs.en && c.langs.en.word;
+            const ko = c.langs && c.langs.ko && c.langs.ko.word;
+            return en || ko || ('word ' + (i + 1));
+        }
+
+        function devRenderWords() {
+            const wrap = document.getElementById('dev-words');
+            const concepts = photos[devPhoto].concepts || [];
+            wrap.innerHTML = '';
+            concepts.forEach((c, i) => {
+                const n = Array.isArray(devBbox[i]) ? devBbox[i].length : 0;
+                const el = document.createElement('div');
+                el.className = 'dev-word' + (i === devSel ? ' sel' : '');
+                el.innerHTML = '<span class="dw-label">' + devWordLabel(i) + '</span>'
+                    + '<span class="dw-count' + (n === 0 ? ' zero' : '') + '">' + n + (n === 1 ? ' box' : ' boxes') + '</span>';
+                el.addEventListener('click', () => { devSel = i; devRenderWords(); devRenderBoxes(); });
+                wrap.appendChild(el);
+            });
+        }
+
+        function devPlace(el, r) {
+            el.style.left = r.x1 + '%'; el.style.top = r.y1 + '%';
+            el.style.width = (r.x2 - r.x1) + '%'; el.style.height = (r.y2 - r.y1) + '%';
+        }
+
+        function devPct(e) {
+            const rect = document.getElementById('dev-img').getBoundingClientRect();
+            return { x: clampPct((e.clientX - rect.left) / rect.width * 100),
+                     y: clampPct((e.clientY - rect.top) / rect.height * 100) };
+        }
+
+        function devRenderBoxes() {
+            const wrap = document.getElementById('dev-imgwrap');
+            wrap.querySelectorAll('.dev-box').forEach(e => e.remove());
+            // Ghost boxes: the other words' targets, for reference (non-interactive).
+            devBbox.forEach((boxes, wi) => {
+                if (wi === devSel || !Array.isArray(boxes)) return;
+                boxes.forEach(r => { const g = document.createElement('div'); g.className = 'dev-box ghost'; devPlace(g, r); wrap.appendChild(g); });
+            });
+            // Selected word's boxes: draggable, resizable, deletable.
+            const sel = devBbox[devSel];
+            if (Array.isArray(sel)) {
+                sel.forEach((r, bi) => {
+                    const box = document.createElement('div');
+                    box.className = 'dev-box';
+                    devPlace(box, r);
+                    const del = document.createElement('button');
+                    del.className = 'dev-del'; del.textContent = '✕';
+                    del.addEventListener('mousedown', e => e.stopPropagation());
+                    del.addEventListener('click', e => { e.stopPropagation(); sel.splice(bi, 1); devDirty = true; devRenderWords(); devRenderBoxes(); });
+                    const h = document.createElement('div'); h.className = 'dev-handle';
+                    box.appendChild(del); box.appendChild(h);
+                    devWireBox(box, h, r);
+                    wrap.appendChild(box);
+                });
+            }
+        }
+
+        function devWireBox(box, handle, r) {
+            // Move: drag the box body.
+            box.addEventListener('mousedown', e => {
+                if (e.target === handle || e.target.classList.contains('dev-del')) return;
+                e.preventDefault();
+                const start = devPct(e), ox = start.x - r.x1, oy = start.y - r.y1;
+                const w = r.x2 - r.x1, hgt = r.y2 - r.y1;
+                function mv(ev) {
+                    const p = devPct(ev);
+                    let nx1 = Math.min(clampPct(p.x - ox), 100 - w);
+                    let ny1 = Math.min(clampPct(p.y - oy), 100 - hgt);
+                    r.x1 = nx1; r.y1 = ny1; r.x2 = nx1 + w; r.y2 = ny1 + hgt; devPlace(box, r);
+                }
+                function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); devDirty = true; }
+                document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+            });
+            // Resize: drag the corner handle.
+            handle.addEventListener('mousedown', e => {
+                e.preventDefault(); e.stopPropagation();
+                function mv(ev) { const p = devPct(ev); r.x2 = Math.max(r.x1 + 2, p.x); r.y2 = Math.max(r.y1 + 2, p.y); devPlace(box, r); }
+                function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); devDirty = true; }
+                document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+            });
+        }
+
+        function devAddBox() {
+            if (!Array.isArray(devBbox[devSel])) devBbox[devSel] = [];
+            devBbox[devSel].push({ x1: 38, y1: 38, x2: 62, y2: 62 });
+            devDirty = true; devRenderWords(); devRenderBoxes();
+        }
+
+        function devSave() {
+            if (!DEV_CAN_SAVE) return;
+            const payload = {
+                photo: photos[devPhoto].photo,
+                bbox: devBbox.map(b => (Array.isArray(b) && b.length)
+                    ? b.map(r => ({ x1: round1(r.x1), y1: round1(r.y1), x2: round1(r.x2), y2: round1(r.y2) }))
+                    : null),
+            };
+            devMsg('saving…', '#d4a017');
+            fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.ok) { photos[devPhoto].bbox = devClone(payload.bbox); devDirty = false; devMsg('saved ✓ ' + (d.file || ''), '#4A8C6A'); }
+                    else devMsg('save failed: ' + (d.error || '?'), '#B85454');
+                })
+                .catch(err => devMsg('save failed: ' + err, '#B85454'));
+        }
+
+        function devGuardSwitch(delta) {
+            if (devDirty && !confirm('Unsaved changes will be lost. Switch photo anyway?')) return;
+            devLoadPhoto(devPhoto + delta);
+        }
+
+        document.getElementById('dev-prev').addEventListener('click', () => devGuardSwitch(-1));
+        document.getElementById('dev-next').addEventListener('click', () => devGuardSwitch(1));
+        document.getElementById('dev-addbox').addEventListener('click', devAddBox);
+        document.getElementById('dev-save').addEventListener('click', devSave);
+        document.getElementById('dev-exit').addEventListener('click', devExit);
+        // Re-place boxes once the image has real dimensions.
+        document.getElementById('dev-img').addEventListener('load', () => { if (devActive) devRenderBoxes(); });
+
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'x' && e.key !== 'X') return;
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            e.preventDefault();
+            devActive ? devExit() : devEnter();
+        });
+
         loadPrefs();
         renderSlides();
         showSlide(0);

@@ -7,8 +7,9 @@ co-equal languages (English, Korean, Japanese, Spanish, French, Mandarin) under
 `langs`, each with `word`, `reading`, and `example`. The UI exposes two pickers:
 "I speak" (home language) and "I'm learning" (target language). Cards teach the
 target word with the home-language word shown as the gloss; the click-target
-game prompts with the home word and rewards with the spoken target word. Audio
-for every language is the browser Web Speech API (no pre-generated mp3 needed).
+game prompts with the target word (the one being learned) and confirms with the
+home-language meaning plus the spoken target word. Audio for every language is
+the browser Web Speech API (no pre-generated mp3 needed).
 
 Images: each source photo (from ~/Dropbox/KRAMOS/korean-photo/) is downscaled
 into docs/photos/ with a URL-safe name and served as a repo-local file by GitHub
@@ -200,6 +201,37 @@ def build_html(photos):
             #gallery-panel, #game-panel { padding: 20px; }
             .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
         }
+
+        /* ── Dev bbox editor (hidden; toggled with the 'x' key) ── */
+        #dev-panel { display: none; position: fixed; inset: 0; z-index: 9999; background: #1c1a17; color: #eee; flex-direction: column; font-family: inherit; }
+        #dev-panel.active { display: flex; }
+        .dev-top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #2a2724; border-bottom: 1px solid #3a3631; flex-wrap: wrap; }
+        .dev-title { font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12px; color: #d4a017; }
+        .dev-btn { background: #3a3631; color: #eee; border: 1px solid #4a463f; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .dev-btn:hover { background: #4a463f; }
+        .dev-btn.primary { background: #3D6B5E; border-color: #3D6B5E; }
+        .dev-btn.primary:hover { background: #4A8C6A; }
+        .dev-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .dev-fname { font-size: 12px; color: #aaa; font-family: monospace; }
+        .dev-msg { font-size: 12px; margin-left: auto; min-height: 16px; }
+        .dev-body { flex: 1; display: flex; min-height: 0; }
+        .dev-stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; background: #141210; }
+        .dev-imgwrap { position: relative; display: inline-block; user-select: none; line-height: 0; }
+        .dev-imgwrap img { display: block; max-width: 100%; max-height: 80vh; }
+        .dev-box { position: absolute; border: 2px solid #4A8C6A; background: rgba(74,140,106,0.18); box-sizing: border-box; cursor: move; }
+        .dev-box.ghost { border: 1.5px dashed #6a6660; background: transparent; pointer-events: none; opacity: 0.55; }
+        .dev-handle { position: absolute; right: -8px; bottom: -8px; width: 15px; height: 15px; background: #fff; border: 2px solid #3D6B5E; border-radius: 50%; cursor: nwse-resize; }
+        .dev-del { position: absolute; right: -9px; top: -9px; width: 19px; height: 19px; background: #B85454; color: #fff; border: none; border-radius: 50%; font-size: 12px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .dev-side { width: 270px; background: #211e1b; border-left: 1px solid #3a3631; overflow-y: auto; padding: 12px; }
+        .dev-side h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-bottom: 8px; }
+        .dev-word { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; background: #2a2724; border: 1px solid transparent; }
+        .dev-word:hover { background: #332f2a; }
+        .dev-word.sel { border-color: #d4a017; background: #332f2a; }
+        .dev-word .dw-label { flex: 1; font-size: 14px; }
+        .dev-word .dw-count { font-size: 11px; color: #888; white-space: nowrap; }
+        .dev-word .dw-count.zero { color: #B85454; }
+        .dev-addbox { width: 100%; margin-top: 10px; }
+        .dev-hint { font-size: 11px; color: #777; margin-top: 14px; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -271,6 +303,33 @@ def build_html(photos):
                     <button class="nav-btn" id="q-replay">play again</button>
                     <button class="nav-btn secondary-btn" id="q-back-gallery" style="display:none">← gallery</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dev bbox editor overlay — hidden until the 'x' key is pressed -->
+    <div id="dev-panel">
+        <div class="dev-top">
+            <span class="dev-title">⚙ bbox editor</span>
+            <button class="dev-btn" id="dev-prev">← photo</button>
+            <span class="dev-fname" id="dev-counter"></span>
+            <button class="dev-btn" id="dev-next">photo →</button>
+            <span class="dev-fname" id="dev-fname"></span>
+            <button class="dev-btn primary" id="dev-save">Save</button>
+            <button class="dev-btn" id="dev-exit">Exit (x)</button>
+            <span class="dev-msg" id="dev-msg"></span>
+        </div>
+        <div class="dev-body">
+            <div class="dev-stage">
+                <div class="dev-imgwrap" id="dev-imgwrap">
+                    <img id="dev-img" src="" alt="">
+                </div>
+            </div>
+            <div class="dev-side">
+                <h4>Words — click one to edit its target box</h4>
+                <div id="dev-words"></div>
+                <button class="dev-btn primary dev-addbox" id="dev-addbox">+ add box to this word</button>
+                <div class="dev-hint">Drag a green box to move it. Drag the corner dot to resize. ✕ deletes a box. Green = the word you're editing; gray dashed = the other words (for reference). Save writes to this photo's JSON, then run <b>deploy.py</b> to publish.</div>
             </div>
         </div>
     </div>
@@ -719,6 +778,184 @@ def build_html(photos):
             if (mode !== 'random') return;
             if (e.key === 'ArrowLeft')  showSlide(currentSlide - 1);
             if (e.key === 'ArrowRight') showSlide(currentSlide + 1);
+        });
+
+        // ── Dev bbox editor ─────────────────────────────────────────
+        // Hidden tool, toggled with the 'x' key. Lets you drag/resize/add/
+        // delete the green click-target boxes per word and save them back to
+        // the source JSON. Saving only works when the page is served from the
+        // local bbox_editor.py server (localhost); on the public site the
+        // editor is read-only so nothing here can touch the live data.
+        const DEV_CAN_SAVE = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+        let devActive = false, devPhoto = 0, devSel = 0, devBbox = null, devDirty = false;
+
+        function clampPct(v) { return Math.max(0, Math.min(100, v)); }
+        function round1(v) { return Math.round(v * 10) / 10; }
+        function devClone(b) { return JSON.parse(JSON.stringify(b == null ? null : b)); }
+        function devMsg(t, c) { const m = document.getElementById('dev-msg'); m.textContent = t || ''; m.style.color = c || '#888'; }
+
+        function devEnter() {
+            devActive = true;
+            document.getElementById('dev-panel').classList.add('active');
+            try { window.speechSynthesis.cancel(); } catch (e) {}
+            const save = document.getElementById('dev-save');
+            save.disabled = !DEV_CAN_SAVE;
+            devLoadPhoto(devPhoto);
+            if (!DEV_CAN_SAVE) devMsg('read-only — run bbox_editor.py to save', '#d4a017');
+        }
+        function devExit() {
+            if (devDirty && !confirm('Unsaved changes on this photo will be lost. Exit anyway?')) return;
+            devActive = false;
+            document.getElementById('dev-panel').classList.remove('active');
+        }
+
+        function devLoadPhoto(idx) {
+            devPhoto = Math.max(0, Math.min(idx, photos.length - 1));
+            const p = photos[devPhoto];
+            const concepts = p.concepts || [];
+            // Normalize bbox to concept length: each slot is an array of boxes or null.
+            let b = devClone(p.bbox) || [];
+            while (b.length < concepts.length) b.push(null);
+            b = b.slice(0, concepts.length).map(x =>
+                Array.isArray(x) ? x.map(r => ({ x1: +r.x1, y1: +r.y1, x2: +r.x2, y2: +r.y2 })) : null);
+            devBbox = b;
+            devSel = 0; devDirty = false;
+            document.getElementById('dev-img').src = encodeURI(p.local_image || '');
+            document.getElementById('dev-counter').textContent = (devPhoto + 1) + ' / ' + photos.length;
+            document.getElementById('dev-fname').textContent = p.photo || '';
+            devMsg('');
+            devRenderWords();
+            devRenderBoxes();
+        }
+
+        function devWordLabel(i) {
+            const c = (photos[devPhoto].concepts || [])[i] || {};
+            const en = c.langs && c.langs.en && c.langs.en.word;
+            const ko = c.langs && c.langs.ko && c.langs.ko.word;
+            return en || ko || ('word ' + (i + 1));
+        }
+
+        function devRenderWords() {
+            const wrap = document.getElementById('dev-words');
+            const concepts = photos[devPhoto].concepts || [];
+            wrap.innerHTML = '';
+            concepts.forEach((c, i) => {
+                const n = Array.isArray(devBbox[i]) ? devBbox[i].length : 0;
+                const el = document.createElement('div');
+                el.className = 'dev-word' + (i === devSel ? ' sel' : '');
+                el.innerHTML = '<span class="dw-label">' + devWordLabel(i) + '</span>'
+                    + '<span class="dw-count' + (n === 0 ? ' zero' : '') + '">' + n + (n === 1 ? ' box' : ' boxes') + '</span>';
+                el.addEventListener('click', () => { devSel = i; devRenderWords(); devRenderBoxes(); });
+                wrap.appendChild(el);
+            });
+        }
+
+        function devPlace(el, r) {
+            el.style.left = r.x1 + '%'; el.style.top = r.y1 + '%';
+            el.style.width = (r.x2 - r.x1) + '%'; el.style.height = (r.y2 - r.y1) + '%';
+        }
+
+        function devPct(e) {
+            const rect = document.getElementById('dev-img').getBoundingClientRect();
+            return { x: clampPct((e.clientX - rect.left) / rect.width * 100),
+                     y: clampPct((e.clientY - rect.top) / rect.height * 100) };
+        }
+
+        function devRenderBoxes() {
+            const wrap = document.getElementById('dev-imgwrap');
+            wrap.querySelectorAll('.dev-box').forEach(e => e.remove());
+            // Ghost boxes: the other words' targets, for reference (non-interactive).
+            devBbox.forEach((boxes, wi) => {
+                if (wi === devSel || !Array.isArray(boxes)) return;
+                boxes.forEach(r => { const g = document.createElement('div'); g.className = 'dev-box ghost'; devPlace(g, r); wrap.appendChild(g); });
+            });
+            // Selected word's boxes: draggable, resizable, deletable.
+            const sel = devBbox[devSel];
+            if (Array.isArray(sel)) {
+                sel.forEach((r, bi) => {
+                    const box = document.createElement('div');
+                    box.className = 'dev-box';
+                    devPlace(box, r);
+                    const del = document.createElement('button');
+                    del.className = 'dev-del'; del.textContent = '✕';
+                    del.addEventListener('mousedown', e => e.stopPropagation());
+                    del.addEventListener('click', e => { e.stopPropagation(); sel.splice(bi, 1); devDirty = true; devRenderWords(); devRenderBoxes(); });
+                    const h = document.createElement('div'); h.className = 'dev-handle';
+                    box.appendChild(del); box.appendChild(h);
+                    devWireBox(box, h, r);
+                    wrap.appendChild(box);
+                });
+            }
+        }
+
+        function devWireBox(box, handle, r) {
+            // Move: drag the box body.
+            box.addEventListener('mousedown', e => {
+                if (e.target === handle || e.target.classList.contains('dev-del')) return;
+                e.preventDefault();
+                const start = devPct(e), ox = start.x - r.x1, oy = start.y - r.y1;
+                const w = r.x2 - r.x1, hgt = r.y2 - r.y1;
+                function mv(ev) {
+                    const p = devPct(ev);
+                    let nx1 = Math.min(clampPct(p.x - ox), 100 - w);
+                    let ny1 = Math.min(clampPct(p.y - oy), 100 - hgt);
+                    r.x1 = nx1; r.y1 = ny1; r.x2 = nx1 + w; r.y2 = ny1 + hgt; devPlace(box, r);
+                }
+                function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); devDirty = true; }
+                document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+            });
+            // Resize: drag the corner handle.
+            handle.addEventListener('mousedown', e => {
+                e.preventDefault(); e.stopPropagation();
+                function mv(ev) { const p = devPct(ev); r.x2 = Math.max(r.x1 + 2, p.x); r.y2 = Math.max(r.y1 + 2, p.y); devPlace(box, r); }
+                function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); devDirty = true; }
+                document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+            });
+        }
+
+        function devAddBox() {
+            if (!Array.isArray(devBbox[devSel])) devBbox[devSel] = [];
+            devBbox[devSel].push({ x1: 38, y1: 38, x2: 62, y2: 62 });
+            devDirty = true; devRenderWords(); devRenderBoxes();
+        }
+
+        function devSave() {
+            if (!DEV_CAN_SAVE) return;
+            const payload = {
+                photo: photos[devPhoto].photo,
+                bbox: devBbox.map(b => (Array.isArray(b) && b.length)
+                    ? b.map(r => ({ x1: round1(r.x1), y1: round1(r.y1), x2: round1(r.x2), y2: round1(r.y2) }))
+                    : null),
+            };
+            devMsg('saving…', '#d4a017');
+            fetch('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.ok) { photos[devPhoto].bbox = devClone(payload.bbox); devDirty = false; devMsg('saved ✓ ' + (d.file || ''), '#4A8C6A'); }
+                    else devMsg('save failed: ' + (d.error || '?'), '#B85454');
+                })
+                .catch(err => devMsg('save failed: ' + err, '#B85454'));
+        }
+
+        function devGuardSwitch(delta) {
+            if (devDirty && !confirm('Unsaved changes will be lost. Switch photo anyway?')) return;
+            devLoadPhoto(devPhoto + delta);
+        }
+
+        document.getElementById('dev-prev').addEventListener('click', () => devGuardSwitch(-1));
+        document.getElementById('dev-next').addEventListener('click', () => devGuardSwitch(1));
+        document.getElementById('dev-addbox').addEventListener('click', devAddBox);
+        document.getElementById('dev-save').addEventListener('click', devSave);
+        document.getElementById('dev-exit').addEventListener('click', devExit);
+        // Re-place boxes once the image has real dimensions.
+        document.getElementById('dev-img').addEventListener('load', () => { if (devActive) devRenderBoxes(); });
+
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'x' && e.key !== 'X') return;
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            e.preventDefault();
+            devActive ? devExit() : devEnter();
         });
 
         loadPrefs();
