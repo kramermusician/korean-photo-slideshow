@@ -99,6 +99,8 @@ def build_html(photos):
         .game-btn {{ background: rgba(255,255,255,0.16); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }}
         .game-btn:hover {{ background: white; color: #8b7355; }}
         .game-btn.active {{ background: white; color: #8b7355; }}
+
+        /* ── Slideshow mode ── */
         .slide {{ display: none; padding: 40px; animation: fadeIn 0.3s ease; }}
         .slide.active {{ display: block; }}
         @keyframes fadeIn {{ from {{ opacity: 0; }} to {{ opacity: 1; }} }}
@@ -124,10 +126,13 @@ def build_html(photos):
         .nav-btn:disabled {{ background: #d4ccc0; cursor: not-allowed; transform: none; }}
         .counter {{ font-size: 14px; color: #8b7355; font-weight: 500; min-width: 60px; text-align: center; }}
         .spacer {{ flex: 1; }}
-        @media (max-width: 600px) {{ .slide {{ padding: 24px; }} .controls {{ padding: 0 24px 24px; }} .vocab-cards {{ grid-template-columns: 1fr; }} .photo {{ max-height: 300px; }} .word-front {{ font-size: 28px; }} .header h1 {{ font-size: 19px; }} .lang-btn {{ padding: 6px 11px; font-size: 13px; }} }}
 
-        /* ── Click Quiz ── */
-        .quiz-heading {{ text-align: center; font-size: 13px; letter-spacing: 0.13em; text-transform: uppercase; color: #8b7355; font-weight: 600; margin-bottom: 24px; }}
+        /* ── Game panel (separate mode, not a slide) ── */
+        #game-panel {{ display: none; padding: 32px 40px 40px; animation: fadeIn 0.3s ease; }}
+        .game-exit-bar {{ display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }}
+        .game-exit-btn {{ background: none; border: 1.5px solid #d4ccc0; color: #8b7355; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }}
+        .game-exit-btn:hover {{ background: #f0ebe5; border-color: #8b7355; }}
+        .quiz-heading {{ font-size: 13px; letter-spacing: 0.13em; text-transform: uppercase; color: #8b7355; font-weight: 600; }}
         .click-game {{ display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }}
         .cg-prompt-row {{ display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; justify-content: center; }}
         .cg-find {{ font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #A09C95; }}
@@ -144,9 +149,20 @@ def build_html(photos):
         .cg-status-row {{ display: flex; align-items: center; gap: 16px; min-height: 38px; flex-wrap: wrap; justify-content: center; }}
         .cg-counter {{ font-size: 12px; letter-spacing: 0.1em; color: #A09C95; text-transform: uppercase; min-width: 48px; }}
         .cg-feedback {{ font-size: 15px; font-style: italic; color: #7A7770; min-width: 180px; text-align: center; }}
-        .q-next {{ display: none; }}
+        #q-next {{ display: none; }}
         .score-screen {{ text-align: center; padding: 20px; }}
         .q-score-text {{ font-size: 22px; color: #3D6B5E; font-weight: 600; margin-bottom: 18px; }}
+
+        @media (max-width: 600px) {{
+            .slide {{ padding: 24px; }}
+            .controls {{ padding: 0 24px 24px; }}
+            .vocab-cards {{ grid-template-columns: 1fr; }}
+            .photo {{ max-height: 300px; }}
+            .word-front {{ font-size: 28px; }}
+            .header h1 {{ font-size: 19px; }}
+            .lang-btn {{ padding: 6px 11px; font-size: 13px; }}
+            #game-panel {{ padding: 24px; }}
+        }}
     </style>
 </head>
 <body>
@@ -163,20 +179,49 @@ def build_html(photos):
                 <button class="game-btn" id="gameBtn">🎯 <span id="gameBtnLabel"></span></button>
             </div>
         </div>
-        <div class="slides-container"></div>
-        <div class="controls">
+
+        <!-- Slideshow mode -->
+        <div class="slides-container" id="slides-container"></div>
+        <div class="controls" id="nav-controls">
             <button class="nav-btn" id="prevBtn">← Previous</button>
             <div class="spacer"></div>
             <div class="counter"><span id="currentSlide">1</span> / <span id="totalSlides">0</span></div>
             <div class="spacer"></div>
             <button class="nav-btn" id="nextBtn">Next →</button>
         </div>
+
+        <!-- Game mode: separate panel, never part of the slide sequence -->
+        <div id="game-panel">
+            <div class="game-exit-bar">
+                <button class="game-exit-btn" id="exitGameBtn">← slides</button>
+                <span class="quiz-heading" id="q-heading"></span>
+            </div>
+            <div id="q-main" class="click-game">
+                <div class="cg-prompt-row">
+                    <span class="cg-find" id="q-find"></span>
+                    <span class="cg-prompt-word" id="q-word" onclick="qSpeak()"></span>
+                </div>
+                <div class="photo-target-wrap" id="q-wrap">
+                    <img id="q-photo" class="target-photo" src="" alt="">
+                </div>
+                <div class="cg-status-row">
+                    <span class="cg-counter" id="q-counter"></span>
+                    <span class="cg-feedback" id="q-feedback"></span>
+                    <button class="nav-btn" id="q-next">next →</button>
+                </div>
+            </div>
+            <div id="q-score" class="score-screen" style="display:none">
+                <div class="q-score-text"></div>
+                <button class="nav-btn" id="q-replay">play again</button>
+            </div>
+        </div>
     </div>
 
     <script>
         const photos = {photos_json};
         let currentSlide = 0;
-        let lang = 'ko';  // 'ko' | 'ja' | 'es'
+        let lang = 'ko';
+        let gameMode = false;
 
         const LANG = {{
             ko: {{ title: 'Korean from Photos', words: 'words', front: w => w.hangul, reading: w => w.romanization, example: w => w.example_ko, audio: true, tts: 'ko-KR',
@@ -189,11 +234,7 @@ def build_html(photos):
 
         function wordsFor(photo) {{ return photo[LANG[lang].words] || []; }}
 
-        // ── Click Quiz ──────────────────────────────────────────────
-        // A challenge is language-independent: it points at a photo + a word
-        // INDEX (shared across ko/ja/es) + that object's hotspot box(es).
-        // bbox is a per-photo array parallel to `words`; an entry is either a
-        // list of {{x1,y1,x2,y2}} percentage boxes or null/absent (not clickable).
+        // Build challenges from bbox data — language-independent (photo index + word index + hotspot boxes)
         function buildChallenges() {{
             const list = [];
             photos.forEach((photo, pIdx) => {{
@@ -206,8 +247,6 @@ def build_html(photos):
         }}
         const QUIZ = buildChallenges();
         const hasQuiz = QUIZ.length > 0;
-        const QUIZ_INDEX = () => photos.length;            // quiz is the last slide
-        function slideTotal() {{ return photos.length + (hasQuiz ? 1 : 0); }}
 
         let qChallenges = [], qIdx = 0, qScore = 0;
 
@@ -249,14 +288,34 @@ def build_html(photos):
             document.getElementById('q-word').textContent = LANG[lang].front(w);
         }}
 
-        function qStart() {{
+        // ── Mode switching ──────────────────────────────────────────
+
+        function enterGame() {{
             if (!hasQuiz) return;
+            gameMode = true;
+            document.getElementById('slides-container').style.display = 'none';
+            document.getElementById('nav-controls').style.display = 'none';
+            document.getElementById('game-panel').style.display = '';
+            document.getElementById('gameBtn').classList.add('active');
+            qStart();
+        }}
+
+        function exitGame() {{
+            gameMode = false;
+            document.getElementById('game-panel').style.display = 'none';
+            document.getElementById('slides-container').style.display = '';
+            document.getElementById('nav-controls').style.display = '';
+            document.getElementById('gameBtn').classList.remove('active');
+            try {{ window.speechSynthesis.cancel(); }} catch(e) {{}}
+        }}
+
+        // ── Game logic ──────────────────────────────────────────────
+
+        function qStart() {{
             qChallenges = qShuffle(QUIZ);
             qIdx = 0; qScore = 0;
-            const scr = document.getElementById('q-score');
-            if (scr) scr.style.display = 'none';
-            const main = document.getElementById('q-main');
-            if (main) main.style.display = '';
+            document.getElementById('q-score').style.display = 'none';
+            document.getElementById('q-main').style.display = '';
             qLoad();
         }}
 
@@ -336,13 +395,14 @@ def build_html(photos):
             scr.style.display = '';
         }}
 
+        // ── Slideshow ───────────────────────────────────────────────
+
         function renderSlides() {{
-            const container = document.querySelector('.slides-container');
+            const container = document.getElementById('slides-container');
             container.innerHTML = '';
             document.getElementById('title').textContent = LANG[lang].title;
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-            const gameBtn = document.getElementById('gameBtn');
-            gameBtn.style.display = hasQuiz ? '' : 'none';
+            document.getElementById('gameBtn').style.display = hasQuiz ? '' : 'none';
             document.getElementById('gameBtnLabel').textContent = LANG[lang].game;
             photos.forEach((photo, idx) => {{
                 const slide = document.createElement('div');
@@ -372,39 +432,8 @@ def build_html(photos):
                 slide.innerHTML = html;
                 container.appendChild(slide);
             }});
-            if (hasQuiz) {{
-                const qs = document.createElement('div');
-                qs.className = 'slide' + (currentSlide === QUIZ_INDEX() ? ' active' : '');
-                qs.innerHTML = `
-                    <div class="quiz-heading" id="q-heading"></div>
-                    <div id="q-main" class="click-game">
-                        <div class="cg-prompt-row">
-                            <span class="cg-find" id="q-find"></span>
-                            <span class="cg-prompt-word" id="q-word" onclick="qSpeak()"></span>
-                        </div>
-                        <div class="photo-target-wrap" id="q-wrap">
-                            <img id="q-photo" class="target-photo" src="" alt="">
-                        </div>
-                        <div class="cg-status-row">
-                            <span class="cg-counter" id="q-counter"></span>
-                            <span class="cg-feedback" id="q-feedback"></span>
-                            <button class="nav-btn q-next" id="q-next">next →</button>
-                        </div>
-                    </div>
-                    <div id="q-score" class="score-screen" style="display:none">
-                        <div class="q-score-text"></div>
-                        <button class="nav-btn" id="q-replay">play again</button>
-                    </div>`;
-                container.appendChild(qs);
-                qs.querySelector('#q-replay').addEventListener('click', qStart);
-            }}
-            document.getElementById('totalSlides').textContent = slideTotal();
+            document.getElementById('totalSlides').textContent = photos.length;
             attachCardListeners();
-            // If a quiz is already in progress (e.g. after a language switch),
-            // re-render the current challenge in the now-active language.
-            if (hasQuiz && currentSlide === QUIZ_INDEX()) {{
-                if (qChallenges.length) qLoad(); else qStart();
-            }}
             updateNav();
         }}
 
@@ -415,30 +444,27 @@ def build_html(photos):
         }}
 
         function showSlide(n) {{
-            currentSlide = Math.max(0, Math.min(n, slideTotal() - 1));
+            currentSlide = Math.max(0, Math.min(n, photos.length - 1));
             document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.slide')[currentSlide].classList.add('active');
             document.getElementById('currentSlide').textContent = currentSlide + 1;
-            // Landing on the quiz slide: start a fresh session, or repaint the
-            // current challenge into a freshly-rebuilt DOM (e.g. after a lang switch).
-            if (hasQuiz && currentSlide === QUIZ_INDEX()) {{
-                if (qChallenges.length === 0) qStart(); else qLoad();
-            }}
             updateNav();
         }}
 
         function updateNav() {{
             document.getElementById('prevBtn').disabled = currentSlide === 0;
-            document.getElementById('nextBtn').disabled = currentSlide === slideTotal() - 1;
-            const gameBtn = document.getElementById('gameBtn');
-            if (gameBtn) gameBtn.classList.toggle('active', hasQuiz && currentSlide === QUIZ_INDEX());
+            document.getElementById('nextBtn').disabled = currentSlide === photos.length - 1;
         }}
 
         function setLang(next) {{
             if (!LANG[next] || next === lang) return;
             lang = next;
             renderSlides();
-            showSlide(currentSlide);
+            if (gameMode) {{
+                qRenderPrompt();
+            }} else {{
+                showSlide(currentSlide);
+            }}
         }}
 
         document.getElementById('prevBtn').addEventListener('click', () => showSlide(currentSlide - 1));
@@ -447,10 +473,11 @@ def build_html(photos):
             const btn = e.target.closest('.lang-btn');
             if (btn) setLang(btn.dataset.lang);
         }});
-        document.getElementById('gameBtn').addEventListener('click', () => {{
-            if (hasQuiz) showSlide(QUIZ_INDEX());
-        }});
+        document.getElementById('gameBtn').addEventListener('click', enterGame);
+        document.getElementById('exitGameBtn').addEventListener('click', exitGame);
+        document.getElementById('q-replay').addEventListener('click', qStart);
         document.addEventListener('keydown', (e) => {{
+            if (gameMode) return;
             if (e.key === 'ArrowLeft') showSlide(currentSlide - 1);
             if (e.key === 'ArrowRight') showSlide(currentSlide + 1);
         }});
