@@ -353,10 +353,10 @@ def build_html(photos):
         // ── Panel switching ─────────────────────────────────────────
 
         function showPanel(which) {{
-            document.getElementById('slides-container').style.display = which === 'random' ? '' : 'none';
-            document.getElementById('nav-controls').style.display   = which === 'random' ? '' : 'none';
-            document.getElementById('gallery-panel').style.display  = which === 'gallery' ? '' : 'none';
-            document.getElementById('game-panel').style.display     = which === 'game'    ? '' : 'none';
+            document.getElementById('slides-container').style.display = which === 'random'  ? '' : 'none';
+            document.getElementById('nav-controls').style.display    = which === 'random'  ? '' : 'none';
+            document.getElementById('gallery-panel').style.display   = which === 'gallery' ? 'block' : 'none';
+            document.getElementById('game-panel').style.display      = which === 'game'    ? 'block' : 'none';
         }}
 
         function setMode(newMode) {{
