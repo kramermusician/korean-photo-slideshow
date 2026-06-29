@@ -188,6 +188,25 @@ def build_html(photos):
         .secondary-btn { background: #f0ebe5; color: #8b7355; border: 1.5px solid #d4ccc0; }
         .secondary-btn:hover { background: #e8ddd0; border-color: #8b7355; }
 
+        /* ── Word Hunt mode ── */
+        #wordhunt-panel { display: none; padding: 32px 40px 40px; animation: fadeIn 0.3s ease; }
+        .wh-prompt { font-size: 16px; color: #5a544c; text-align: center; margin-bottom: 18px; line-height: 1.4; }
+        .wh-photo-wrap { text-align: center; margin-bottom: 22px; }
+        .wh-photo { max-width: 100%; max-height: 320px; border-radius: 12px; box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
+        .wh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .wh-chip { padding: 16px 12px; border-radius: 10px; border: 2px solid #e0d9d0; background: #f9f8f6; cursor: pointer; text-align: center; font-size: 19px; font-weight: 600; color: #2c2c2c; transition: all 0.16s ease; line-height: 1.25; }
+        .wh-chip:hover { border-color: #8b7355; background: #fff; transform: translateY(-1px); }
+        .wh-chip.green { background: #e6f2ec; border-color: #4A8C6A; color: #2f5d4a; cursor: default; transform: none; }
+        .wh-chip.green:hover { background: #e6f2ec; transform: none; }
+        .wh-chip.red { background: #f7e6e6; border-color: #B85454; color: #8a3a3a; cursor: default; opacity: 0.75; }
+        .wh-chip.red:hover { background: #f7e6e6; transform: none; }
+        .wh-gloss { display: block; font-size: 13px; font-weight: 500; color: #4A8C6A; margin-top: 5px; }
+        .wh-reading { display: block; font-size: 11px; font-weight: 500; color: #8b7355; margin-top: 2px; }
+        .wh-counter { font-size: 13px; letter-spacing: 0.04em; color: #8b7355; font-weight: 600; }
+        .wh-done { text-align: center; font-size: 17px; color: #3D6B5E; font-weight: 600; margin-top: 22px; }
+        .wh-next-wrap { text-align: center; margin-top: 16px; min-height: 44px; }
+        #wh-next { display: none; }
+
         @media (max-width: 600px) {
             .slide { padding: 24px; }
             .controls { padding: 0 24px 24px; }
@@ -198,8 +217,11 @@ def build_html(photos):
             .picker-label { min-width: 0; text-align: center; }
             .lang-btn { padding: 6px 10px; font-size: 13px; }
             .mode-tab { padding: 6px 12px; font-size: 12px; }
-            #gallery-panel, #game-panel { padding: 20px; }
+            #gallery-panel, #game-panel, #wordhunt-panel { padding: 20px; }
             .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+            .wh-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .wh-chip { font-size: 17px; padding: 13px 8px; }
+            .wh-photo { max-height: 240px; }
         }
 
         /* ── Dev bbox editor (hidden; toggled with the 'x' key) ── */
@@ -254,6 +276,7 @@ def build_html(photos):
                     <button class="mode-tab" data-mode="gallery">🖼 Gallery</button>
                     <button class="mode-tab active" data-mode="random">🔀 Random</button>
                     <button class="mode-tab" data-mode="clicktarget" id="tabClickTarget">🎯 Click Target</button>
+                    <button class="mode-tab" data-mode="wordhunt" id="tabWordHunt">🔎 Word Hunt</button>
                 </div>
             </div>
         </div>
@@ -305,6 +328,24 @@ def build_html(photos):
                 </div>
             </div>
         </div>
+
+        <!-- Word Hunt: photo + 10 word chips (5 in photo, 5 not) -->
+        <div id="wordhunt-panel">
+            <div class="game-exit-bar">
+                <button class="game-exit-btn" id="exitWordHuntBtn">← random</button>
+                <span class="quiz-heading" id="wh-heading"></span>
+                <span class="wh-counter" id="wh-counter"></span>
+            </div>
+            <div class="wh-prompt" id="wh-prompt"></div>
+            <div class="wh-photo-wrap">
+                <img id="wh-photo" class="wh-photo" src="" alt="">
+            </div>
+            <div class="wh-grid" id="wh-grid"></div>
+            <div class="wh-done" id="wh-done" style="display:none"></div>
+            <div class="wh-next-wrap">
+                <button class="nav-btn" id="wh-next"></button>
+            </div>
+        </div>
     </div>
 
     <!-- Dev bbox editor overlay — hidden until the 'x' key is pressed -->
@@ -349,31 +390,43 @@ def build_html(photos):
                   heading: '사진 게임 · 눌러보세요', find: '찾기', miss: '아쉬워요',
                   next: '다음 →', seeScore: '점수 보기 →', playAgain: '다시 하기',
                   backGallery: '← 갤러리',
+                  huntPrompt: '이 사진에 있는 단어를 모두 찾으세요', found: '찾음',
+                  huntDone: '다 찾았어요! 🎉', huntNext: '다음 사진 →',
                   score: (n, t) => n + ' / ' + t + ' 맞췄어요!' },
             ja: { display: '日本語', enName: 'Japanese', tts: 'ja-JP',
                   heading: '写真ゲーム · タップしよう', find: '探そう', miss: 'おしい',
                   next: '次へ →', seeScore: 'スコア →', playAgain: 'もう一度',
                   backGallery: '← ギャラリー',
+                  huntPrompt: 'この写真にある単語をすべて見つけよう', found: '正解',
+                  huntDone: '全部見つけた！🎉', huntNext: '次の写真 →',
                   score: (n, t) => n + ' / ' + t + ' 正解！' },
             es: { display: 'Español', enName: 'Spanish', tts: 'es-ES', article: true,
                   heading: 'Juego de fotos · toca el objeto', find: 'Busca', miss: 'casi',
                   next: 'siguiente →', seeScore: 'ver puntaje →', playAgain: 'otra vez',
                   backGallery: '← galería',
+                  huntPrompt: 'Encuentra todas las palabras que están en la foto', found: 'halladas',
+                  huntDone: '¡Las encontraste todas! 🎉', huntNext: 'otra foto →',
                   score: (n, t) => '¡' + n + ' de ' + t + '!' },
             fr: { display: 'Français', enName: 'French', tts: 'fr-FR', article: true,
                   heading: 'Jeu photo · touchez l’objet', find: 'Trouvez', miss: 'presque',
                   next: 'suivant →', seeScore: 'voir le score →', playAgain: 'recommencer',
                   backGallery: '← galerie',
+                  huntPrompt: 'Trouvez tous les mots présents sur la photo', found: 'trouvés',
+                  huntDone: 'Tout trouvé ! 🎉', huntNext: 'autre photo →',
                   score: (n, t) => n + ' / ' + t + ' trouvés !' },
             zh: { display: '中文', enName: 'Mandarin', tts: 'zh-CN',
                   heading: '照片游戏 · 点一下', find: '找一找', miss: '差一点',
                   next: '下一个 →', seeScore: '查看得分 →', playAgain: '再玩一次',
                   backGallery: '← 图库',
+                  huntPrompt: '找出照片里出现的所有词', found: '已找到',
+                  huntDone: '全部找到了！🎉', huntNext: '下一张 →',
                   score: (n, t) => n + ' / ' + t + ' 答对了！' },
             en: { display: 'English', enName: 'English', tts: 'en-US',
                   heading: 'Photo game · tap the object', find: 'Find', miss: 'so close',
                   next: 'next →', seeScore: 'see score →', playAgain: 'play again',
                   backGallery: '← gallery',
+                  huntPrompt: 'Find all the words that are in the photo', found: 'found',
+                  huntDone: 'You found them all! 🎉', huntNext: 'next photo →',
                   score: (n, t) => n + ' / ' + t + ' correct!' },
         };
         const LANG_ORDER = ['ko', 'ja', 'es', 'fr', 'zh', 'en'];
@@ -421,6 +474,26 @@ def build_html(photos):
         const hasQuiz = QUIZ.length > 0;
 
         let qChallenges = [], qIdx = 0, qScore = 0;
+
+        // ── Word Hunt pool ──────────────────────────────────────────
+        // Language-independent identity for a concept (English word, falling back
+        // to Korean) so a word can never be both a correct answer and a distractor,
+        // and dedup survives language switches.
+        function conceptId(pIdx, wIdx) {
+            const c = (photos[pIdx].concepts || [])[wIdx] || {};
+            const en = c.langs && c.langs.en && c.langs.en.word;
+            const ko = c.langs && c.langs.ko && c.langs.ko.word;
+            return (en || ko || (pIdx + ':' + wIdx)).toLowerCase().trim();
+        }
+        // Every concept across every photo, as {pIdx, wIdx} — the distractor pool.
+        const WH_ALL = [];
+        photos.forEach((p, pIdx) => (p.concepts || []).forEach((c, wIdx) => WH_ALL.push({ pIdx, wIdx })));
+        // A photo is playable if it has >=2 concepts to hunt for.
+        const WH_PHOTOS = photos.map((p, i) => i).filter(i => (photos[i].concepts || []).length >= 2);
+        const hasWordHunt = WH_PHOTOS.length >= 1 && WH_ALL.length >= 6;
+
+        const WH_TOTAL = 10, WH_MAX_CORRECT = 5;
+        let whOrder = [], whRound = 0, whChips = [], whFound = 0, whTarget = 0;
 
         // ── Utilities ───────────────────────────────────────────────
 
@@ -494,10 +567,12 @@ def build_html(photos):
             document.getElementById('nav-controls').style.display    = which === 'random'  ? '' : 'none';
             document.getElementById('gallery-panel').style.display   = which === 'gallery' ? 'block' : 'none';
             document.getElementById('game-panel').style.display      = which === 'game'    ? 'block' : 'none';
+            document.getElementById('wordhunt-panel').style.display  = which === 'wordhunt'? 'block' : 'none';
         }
 
         function setMode(newMode) {
             if (newMode === 'clicktarget' && !hasQuiz) return;
+            if (newMode === 'wordhunt' && !hasWordHunt) return;
             mode = newMode;
             document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
             try { window.speechSynthesis.cancel(); } catch(e) {}
@@ -513,6 +588,9 @@ def build_html(photos):
                 document.getElementById('exitGameBtn').onclick = () => setMode('random');
                 streak = 0; updateStreak(null);
                 qStartAllPhotos();
+            } else if (mode === 'wordhunt') {
+                showPanel('wordhunt');
+                whStart();
             }
         }
 
@@ -662,6 +740,97 @@ def build_html(photos):
             scr.style.display = '';
         }
 
+        // ── Word Hunt ───────────────────────────────────────────────
+        // Show a photo + 10 target-language words: WH_MAX_CORRECT belong to the
+        // photo, the rest are distractors from other photos. Click a word -> green
+        // (in photo) or red (not). When every correct word is found, the greens
+        // reveal their home-language translations.
+
+        function whStart() {
+            whOrder = qShuffle(WH_PHOTOS);
+            whRound = 0;
+            whLoad();
+        }
+
+        function whLoad() {
+            const pIdx = whOrder[whRound];
+            const concepts = photos[pIdx].concepts || [];
+            const correct = qShuffle(concepts.map((c, wIdx) => ({ pIdx, wIdx }))).slice(0, WH_MAX_CORRECT);
+            // Distractors: concepts from OTHER photos, deduped by meaning.
+            const seen = new Set(correct.map(ch => conceptId(ch.pIdx, ch.wIdx)));
+            const distractors = [];
+            for (const ch of qShuffle(WH_ALL.filter(ch => ch.pIdx !== pIdx))) {
+                if (distractors.length >= WH_TOTAL - correct.length) break;
+                const id = conceptId(ch.pIdx, ch.wIdx);
+                if (seen.has(id)) continue;
+                seen.add(id);
+                distractors.push(ch);
+            }
+            whTarget = correct.length;
+            whFound = 0;
+            whChips = qShuffle(
+                correct.map(ch => ({ ...ch, correct: true, clicked: false, revealed: false }))
+                .concat(distractors.map(ch => ({ ...ch, correct: false, clicked: false, revealed: false }))));
+            document.getElementById('wh-photo').src = encodeURI(photos[pIdx].local_image || '');
+            document.getElementById('wh-done').style.display = 'none';
+            document.getElementById('wh-next').style.display = 'none';
+            whRenderStrings();
+            whRenderChips();
+        }
+
+        function whRenderStrings() {
+            document.getElementById('wh-heading').textContent = LANG[target].heading;
+            document.getElementById('wh-prompt').textContent = LANG[target].huntPrompt;
+            document.getElementById('wh-counter').textContent = whFound + ' / ' + whTarget + ' ' + LANG[target].found;
+            document.getElementById('wh-done').textContent = LANG[target].huntDone;
+            document.getElementById('wh-next').textContent = LANG[target].huntNext;
+        }
+
+        function whRenderChips() {
+            const grid = document.getElementById('wh-grid');
+            grid.innerHTML = '';
+            whChips.forEach((chip, i) => {
+                const c = (photos[chip.pIdx].concepts || [])[chip.wIdx];
+                const t = (c && c.langs && c.langs[target]) || {};
+                const el = document.createElement('div');
+                el.className = 'wh-chip' + (chip.clicked ? (chip.correct ? ' green' : ' red') : '');
+                let html = '<span class="wh-word">' + wordLabel(target, t) + '</span>';
+                if (chip.revealed) {
+                    const h = (c && c.langs && c.langs[home]) || {};
+                    if (h.word) html += '<span class="wh-gloss">' + h.word + '</span>';
+                }
+                el.innerHTML = html;
+                if (!chip.clicked) el.addEventListener('click', () => whClick(i));
+                grid.appendChild(el);
+            });
+        }
+
+        function whClick(i) {
+            const chip = whChips[i];
+            if (chip.clicked) return;
+            chip.clicked = true;
+            const c = (photos[chip.pIdx].concepts || [])[chip.wIdx];
+            const t = (c && c.langs && c.langs[target]) || {};
+            if (t.word) speak(t.word, LANG[target].tts);
+            if (chip.correct) whFound++;
+            whRenderStrings();
+            whRenderChips();
+            if (whFound >= whTarget) whComplete();
+        }
+
+        function whComplete() {
+            whChips.forEach(ch => { if (ch.correct) ch.revealed = true; });
+            whRenderChips();
+            document.getElementById('wh-done').style.display = 'block';
+            const nxt = document.getElementById('wh-next');
+            nxt.style.display = 'inline-block';
+            nxt.onclick = () => {
+                whRound++;
+                if (whRound >= whOrder.length) { whOrder = qShuffle(WH_PHOTOS); whRound = 0; }
+                whLoad();
+            };
+        }
+
         // ── Slideshow ───────────────────────────────────────────────
 
         function renderSlides() {
@@ -670,6 +839,7 @@ def build_html(photos):
             document.getElementById('title').textContent = LANG[target].enName + ' from your photos';
             renderPickers();
             if (!hasQuiz) document.getElementById('tabClickTarget').disabled = true;
+            if (!hasWordHunt) document.getElementById('tabWordHunt').disabled = true;
             photos.forEach((photo, idx) => {
                 const slide = document.createElement('div');
                 slide.className = 'slide' + (idx === currentSlide ? ' active' : '');
@@ -740,6 +910,9 @@ def build_html(photos):
                 showSlide(currentSlide);
             } else if (mode === 'clicktarget' || (mode === 'gallery' && galleryPhotoIdx >= 0)) {
                 qRenderPrompt();
+            } else if (mode === 'wordhunt') {
+                whRenderStrings();
+                whRenderChips();
             }
         }
 
@@ -764,6 +937,7 @@ def build_html(photos):
         document.querySelectorAll('.mode-tab').forEach(tab => {
             tab.addEventListener('click', () => setMode(tab.dataset.mode));
         });
+        document.getElementById('exitWordHuntBtn').addEventListener('click', () => setMode('random'));
         document.getElementById('prevBtn').addEventListener('click', () => showSlide(currentSlide - 1));
         document.getElementById('nextBtn').addEventListener('click', () => showSlide(currentSlide + 1));
         document.getElementById('homePicker').addEventListener('click', (e) => {
@@ -961,6 +1135,16 @@ def build_html(photos):
         loadPrefs();
         renderSlides();
         showSlide(0);
+
+        // Auto-open the bbox editor when launched from the dashboard's "Edit boxes"
+        // button: bbox_editor.py opens this page at #edit. Localhost only, so the
+        // public GitHub Pages copy never auto-enters the (read-only) editor.
+        if (DEV_CAN_SAVE && /edit/i.test(location.hash)) devEnter();
+        // Also handle the case where the tab was already open and bbox_editor.py
+        // just re-pointed it at #edit (no reload fires the load-time check above).
+        window.addEventListener('hashchange', () => {
+            if (DEV_CAN_SAVE && /edit/i.test(location.hash) && !devActive) devEnter();
+        });
     </script>
 </body>
 </html>'''
