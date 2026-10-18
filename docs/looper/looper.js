@@ -72,7 +72,7 @@ async function start() {
   try {
     app.ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
     app.sr = app.ctx.sampleRate;
-    await app.ctx.audioWorklet.addModule('worklet.js');
+    await app.ctx.audioWorklet.addModule('worklet.js?v=3');
     app.node = new AudioWorkletNode(app.ctx, 'looper', {
       numberOfInputs: 1, numberOfOutputs: 3, outputChannelCount: [2, 1, 1],
     });
