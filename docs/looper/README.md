@@ -8,7 +8,7 @@ Three files, no build step, no dependencies: `index.html` (UI), `looper.js` (tra
 
 ## Feasibility, in short
 
-A browser can do the core of LoopGrid well: the RC-505 spacebar model, loops locked to one sample clock, the adaptive grid, quantize, tap tempo, click and count-in, per-loop mute, volume, reverse and reverb, and a performance recording. The pieces that were in doubt all have a web API that is good enough:
+A browser can do the core of LoopGrid well: the RC-505 spacebar model, loops locked to one sample clock, the adaptive grid, quantize, tap tempo, click and count-in, per-loop mute, volume, reverse and reverb, instant loop mode (I), and a performance recording. The pieces that were in doubt all have a web API that is good enough:
 
 | Native piece | Web equivalent | Verdict |
 | --- | --- | --- |

@@ -23,7 +23,7 @@ const app = {
   state: 'idle', recStart: 0, closeAt: 0, closeLen: 0, countInEnd: 0,
   masterLength: null, masterStart: 0,
   bpm: null, beatOrigin: 0, taps: [],
-  quantize: false, sync: true, click: false, countIn: false,
+  quantize: false, sync: true, click: false, countIn: false, instant: false,
   monitor: false, liveReverb: false, mirror: true,
   cameraOffsetMs: 80,
   memoryBytes: 0, inputRms: 0,
@@ -266,7 +266,9 @@ function space() {
   }
 }
 
-function beginTake(p) {
+// `pinned` fixes the take's start (instant loop mode starts the next take
+// exactly where the last loop closed); otherwise it is now, snapped.
+function beginTake(p, pinned) {
   if (app.loops.length >= MAX_LOOPS) return flash('All 9 tiles are full. Shift+number clears one.');
   if (app.memoryBytes >= MEMORY_CAP) return flash('Loop memory is at the cap. Clear a tile first.');
   const bar = barLen();
@@ -280,7 +282,7 @@ function beginTake(p) {
     return;
   }
   if (app.countIn && app.loops.length === 0) flash('No tempo, so no count-in: tap T first');
-  app.recStart = snapToGrid(p);
+  app.recStart = pinned != null ? pinned : snapToGrid(p);
   app.keepFrom = Math.min(app.recStart, p) - Math.round(0.2 * app.sr);
   app.state = 'recording';
 }
@@ -321,6 +323,7 @@ function finalize(activeFrom) {
   app.selectedId = loop.id;
   app.state = 'armed';
   relayout();
+  if (app.instant) beginTake(activeFrom, loop.start + loop.length);
   const wait = Math.max(0.35, app.cameraOffsetMs / 1000 + 0.25);
   setTimeout(() => {
     if (!app.loops.includes(loop)) { if (app.state !== 'recording' && app.state !== 'closing') app.keepFrom = null; return; }
@@ -699,6 +702,7 @@ function updateHud(p, beats) {
   setFlag('#hud-s', app.sync);
   setFlag('#hud-m', app.click);
   setFlag('#hud-c', app.countIn);
+  setFlag('#hud-i', app.instant);
   setFlag('#hud-rec', !!app.recorder);
   setText('#hud-mem', (app.memoryBytes / 1e6).toFixed(0) + ' MB');
   const lvl = Math.min(1, app.inputRms * 4);
@@ -730,6 +734,7 @@ function handleKey(code, shift, repeat) {
     case 'KeyT': tapTempo(); return true;
     case 'KeyF': freeMode(); return true;
     case 'KeyM': app.click = !app.click; pushClick(); flash(app.bpm ? 'Click ' + (app.click ? 'on' : 'off') : 'Click needs a tempo: tap T'); return true;
+    case 'KeyI': app.instant = !app.instant; flash(app.instant ? 'Instant loop on: space closes a loop and starts the next take at once' : 'Instant loop off: space closes, space again records'); return true;
     case 'KeyC': app.countIn = !app.countIn; flash('Count-in ' + (app.countIn ? 'on' : 'off')); return true;
     case 'KeyR': toggleRecord(); return true;
     case 'BracketLeft': nudgeOffset(-5); return true;
