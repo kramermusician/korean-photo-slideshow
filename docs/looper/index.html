@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoopGrid Web</title>
+<meta name="description" content="A video looper in the browser: space records a camera take, space again loops it in sync with the rest.">
+<style>
+  :root {
+    --bg: #0c0e12; --panel: #161a21; --ink: #e8ecf1; --dim: #8b93a1; --teal: #4ecdc4; --red: #e6453f; --amber: #f0a33a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  .hidden { display: none !important; }
+  #gate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #gate .card { max-width: 560px; background: var(--panel); border-radius: 16px; padding: 28px 28px 24px; }
+  #gate h1 { margin: 0 0 6px; font-size: 26px; font-weight: 600; letter-spacing: 0.3px; }
+  #gate h1 span { color: var(--teal); }
+  #gate p { margin: 8px 0; color: var(--dim); }
+  #gate ul { margin: 10px 0 18px 18px; padding: 0; color: var(--dim); }
+  #gate li { margin: 4px 0; }
+  #start { font: inherit; font-size: 17px; padding: 12px 22px; border: 0; border-radius: 10px; background: var(--teal); color: #0c0e12; cursor: pointer; }
+  #start:disabled { opacity: 0.6; cursor: default; }
+  #gate-error { color: var(--amber); min-height: 1.4em; margin-top: 12px; }
+  #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+  #hud { display: flex; align-items: center; gap: 14px; padding: 6px 14px; background: var(--panel); font-size: 13px; color: var(--dim); flex-wrap: wrap; }
+  #hud .brand { color: var(--ink); font-weight: 600; letter-spacing: 0.3px; }
+  #hud .brand span { color: var(--teal); }
+  #hud-state { padding: 2px 9px; border-radius: 999px; background: #262c36; color: var(--ink); }
+  #hud-state[data-state="recording"], #hud-state[data-state="closing"] { background: var(--red); color: #fff; }
+  #hud-state[data-state="countIn"] { background: var(--amber); color: #0c0e12; }
+  #hud-state[data-state="armed"] { background: #2b4a48; color: var(--teal); }
+  #hud-beat { width: 11px; height: 11px; border-radius: 50%; background: var(--teal); display: inline-block; vertical-align: middle; }
+  .flag { padding: 2px 7px; border-radius: 6px; border: 1px solid #2a313c; }
+  .flag.on { border-color: var(--teal); color: var(--teal); }
+  #hud-rec.on { border-color: var(--red); color: var(--red); }
+  #meter { width: 90px; height: 8px; background: #262c36; border-radius: 4px; overflow: hidden; }
+  #meter-fill { height: 100%; width: 0; background: var(--teal); transition: width 60ms linear; }
+  #hud .spacer { flex: 1; }
+  #hud button { font: inherit; font-size: 13px; background: #262c36; color: var(--ink); border: 0; border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+  #stage { flex: 1; position: relative; min-height: 0; }
+  #grid { width: 100%; height: 100%; display: block; }
+  #flash { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(10px); background: rgba(22,26,33,0.92); color: var(--ink); padding: 9px 16px; border-radius: 10px; opacity: 0; transition: opacity 160ms, transform 160ms; pointer-events: none; max-width: 80%; text-align: center; }
+  #flash.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; background: var(--panel); }
+  #bar button { font: inherit; font-size: 12.5px; background: #262c36; color: var(--ink); border: 0; border-radius: 7px; padding: 6px 9px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 6px; }
+  #bar button:hover { background: #313947; }
+  #bar button kbd { font: 600 11px/1 ui-monospace, Menlo, monospace; background: #0c0e12; color: var(--teal); padding: 3px 5px; border-radius: 4px; }
+  #bar button.big { background: var(--teal); color: #0c0e12; }
+  #bar button.big kbd { background: #0c0e12; color: var(--teal); }
+  .dialog { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.55); z-index: 10; }
+  .dialog.open { display: flex; }
+  .dialog .box { background: var(--panel); border-radius: 14px; padding: 20px 24px; max-width: 640px; width: calc(100% - 32px); max-height: calc(100% - 32px); overflow: auto; }
+  .dialog h2 { margin: 0 0 12px; font-size: 18px; font-weight: 600; }
+  .dialog .close { float: right; font: inherit; background: #262c36; color: var(--ink); border: 0; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .dialog table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  .dialog td { padding: 4px 6px; border-top: 1px solid #262c36; vertical-align: top; }
+  .dialog td:first-child { white-space: nowrap; color: var(--teal); font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  .dialog label { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid #262c36; }
+  .dialog label:first-of-type { border-top: 0; }
+  .dialog select, .dialog input[type=range] { font: inherit; max-width: 60%; }
+  .dialog select { background: #262c36; color: var(--ink); border: 0; border-radius: 6px; padding: 4px 8px; }
+  .dialog p { color: var(--dim); font-size: 14px; }
+  @media (max-width: 700px) { #bar button span.t { display: none; } }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="card">
+    <h1>Loop<span>Grid</span> Web</h1>
+    <p>A video looper in the browser. Space records a camera-and-audio take, space again closes it into a loop that plays at once, in time with the rest. Up to nine loops fill the grid.</p>
+    <ul>
+      <li>Works in current Chrome, Edge, Firefox and Safari on a laptop or desktop. Chrome or Edge is the smoothest.</li>
+      <li>Use headphones, or the speakers will feed back into the next loop.</li>
+      <li>Keep this tab in front while you play. A background tab stops drawing frames.</li>
+      <li>Nothing leaves your computer. Loops live in memory and vanish when you close the tab.</li>
+    </ul>
+    <button id="start">Start</button>
+    <div id="gate-error"></div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div id="hud">
+    <span class="brand">Loop<span>Grid</span> Web</span>
+    <span id="hud-state" data-state="idle">Idle</span>
+    <span><span id="hud-beat"></span> <span id="hud-bar"></span></span>
+    <span id="hud-mode">Free</span>
+    <span id="hud-q" class="flag">Q quantize</span>
+    <span id="hud-s" class="flag on">S sync</span>
+    <span id="hud-m" class="flag">M click</span>
+    <span id="hud-c" class="flag">C count-in</span>
+    <span id="hud-rec" class="flag">R rec</span>
+    <span>loops <span id="hud-loops">0/9</span></span>
+    <span><span id="hud-mem">0 MB</span></span>
+    <span title="input level" id="meter"><span id="meter-fill"></span></span>
+    <span class="spacer"></span>
+    <button data-dialog="#help">? Help</button>
+    <button data-dialog="#settings">Settings</button>
+  </div>
+  <div id="stage">
+    <canvas id="grid"></canvas>
+    <div id="flash"></div>
+  </div>
+  <div id="bar">
+    <button class="big" data-code="Space"><kbd>Space</kbd><span class="t">Record / close</span></button>
+    <button data-code="Escape"><kbd>Esc</kbd><span class="t">Discard take</span></button>
+    <button data-code="Delete"><kbd>Del</kbd><span class="t">Delete newest</span></button>
+    <button data-code="Delete" data-shift="1"><kbd>⇧Del</kbd><span class="t">Clear all</span></button>
+    <button data-code="Tab"><kbd>Tab</kbd><span class="t">Select loop</span></button>
+    <button data-code="ArrowUp"><kbd>↑</kbd><span class="t">Louder</span></button>
+    <button data-code="ArrowDown"><kbd>↓</kbd><span class="t">Softer</span></button>
+    <button data-code="KeyB"><kbd>B</kbd><span class="t">Reverse</span></button>
+    <button data-code="KeyV"><kbd>V</kbd><span class="t">Reverb</span></button>
+    <button data-code="KeyQ"><kbd>Q</kbd><span class="t">Quantize</span></button>
+    <button data-code="KeyS"><kbd>S</kbd><span class="t">Sync</span></button>
+    <button data-code="KeyT"><kbd>T</kbd><span class="t">Tap tempo</span></button>
+    <button data-code="KeyF"><kbd>F</kbd><span class="t">Free mode</span></button>
+    <button data-code="KeyM"><kbd>M</kbd><span class="t">Click</span></button>
+    <button data-code="KeyC"><kbd>C</kbd><span class="t">Count-in</span></button>
+    <button data-code="BracketLeft"><kbd>[</kbd><span class="t">Offset −5 ms</span></button>
+    <button data-code="BracketRight"><kbd>]</kbd><span class="t">Offset +5 ms</span></button>
+    <button data-code="KeyR"><kbd>R</kbd><span class="t">Record performance</span></button>
+    <button data-code="Enter"><kbd>Enter</kbd><span class="t">Fullscreen</span></button>
+    <button data-code="KeyH"><kbd>H</kbd><span class="t">Hide bar</span></button>
+  </div>
+</div>
+
+<div id="help" class="dialog">
+  <div class="box">
+    <button class="close">Close</button>
+    <h2>How to play</h2>
+    <p>Press space to start a take, and space again to close it. The first loop sets the length; every later take snaps to a quarter, a half, or a whole number of that length, so everything stays in phase. Number keys mute tiles. Tap T a few times before the first loop to set a tempo, then M for a click and C for a one-bar count-in.</p>
+    <p>If the picture lands a little after the sound, record a clap and nudge the camera offset with [ and ] until they line up. The setting is remembered.</p>
+    <table>
+      <tr><td>Space</td><td>Record / close loop / start next take</td></tr>
+      <tr><td>Esc</td><td>Discard the take in progress</td></tr>
+      <tr><td>1-9</td><td>Mute or unmute that tile (or click the tile's number)</td></tr>
+      <tr><td>Shift + 1-9</td><td>Clear that tile</td></tr>
+      <tr><td>Delete</td><td>Delete the newest loop (during a take, discards the take)</td></tr>
+      <tr><td>Shift + Delete</td><td>Clear all loops</td></tr>
+      <tr><td>Tab</td><td>Select the next loop (teal outline); a new loop is selected automatically. Clicking a tile selects it too</td></tr>
+      <tr><td>Up / Down</td><td>Volume of the selected loop, 0 to 150 percent; the tile dims with it</td></tr>
+      <tr><td>B</td><td>Reverse the selected loop, sound and picture, landing on the next beat</td></tr>
+      <tr><td>V</td><td>Reverb on the selected loop</td></tr>
+      <tr><td>Shift + V</td><td>Reverb on the live sound (needs monitoring on); the next take keeps it</td></tr>
+      <tr><td>Q</td><td>Quantize on/off: take starts and ends snap to the nearest beat, or quarter-loop in free mode</td></tr>
+      <tr><td>S</td><td>Loop sync on/off (default on)</td></tr>
+      <tr><td>T</td><td>Tap tempo, before the first loop</td></tr>
+      <tr><td>F</td><td>Back to free mode (empty grid only)</td></tr>
+      <tr><td>M</td><td>Click on/off (needs a tempo)</td></tr>
+      <tr><td>C</td><td>Count-in: with a tempo and no loops yet, space plays one bar of click and the take starts on the downbeat</td></tr>
+      <tr><td>[ and ]</td><td>Nudge the camera offset 5 ms, live on every loop</td></tr>
+      <tr><td>R</td><td>Start/stop recording the performance; the file downloads when you stop (webm in Chrome and Firefox, mp4 in Safari)</td></tr>
+      <tr><td>Enter</td><td>Fullscreen</td></tr>
+      <tr><td>H</td><td>Show/hide the controls bar</td></tr>
+      <tr><td>?</td><td>This help</td></tr>
+      <tr><td>,</td><td>Settings</td></tr>
+    </table>
+    <p>This is the browser edition of LoopGrid, the native macOS app. Not here yet: octave down, half speed, beat repeat, undo, the video effects, overlay and cube views.</p>
+  </div>
+</div>
+
+<div id="settings" class="dialog">
+  <div class="box">
+    <button class="close">Close</button>
+    <h2>Settings</h2>
+    <label>Camera <select id="set-cam"></select></label>
+    <label>Microphone <select id="set-mic"></select></label>
+    <label>Camera offset <span><input id="set-offset" type="range" min="-250" max="250" step="5" value="80"> <span id="set-offset-val">80 ms</span></span></label>
+    <label>Mirror the picture <input id="set-mirror" type="checkbox" checked></label>
+    <label>Hear the live input (headphones only) <input id="set-monitor" type="checkbox"></label>
+    <label>Stored frame size <select id="set-store"><option value="320">320 × 180 (lightest)</option><option value="480" selected>480 × 270</option><option value="640">640 × 360 (sharpest)</option></select></label>
+    <p>The frame size sets how much memory each loop takes: about 7, 15 or 28 MB per second of loop. The cap is 1.5 GB, shown in the top bar.</p>
+    <p>Audio input is captured raw: echo cancellation, noise suppression and auto gain are off, so instruments come through as they are.</p>
+  </div>
+</div>
+
+<script src="looper.js"></script>
+</body>
+</html>
